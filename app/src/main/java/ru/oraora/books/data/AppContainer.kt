@@ -3,23 +3,26 @@ package ru.oraora.books.data
 import com.google.gson.GsonBuilder
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import ru.oraora.books.entity.IdListResponse
-import ru.oraora.books.entity.IdListResponseDeserializer
-import ru.oraora.books.network.BookApiService
+import retrofit2.converter.ogson.OGsonConverterFactory
+import ru.oraora.books.data.models.IdListResponse
+import ru.oraora.books.data.models.IdListResponseDeserializer
+import ru.oraora.books.data.repository.BookRepository
+import ru.oraora.books.data.repository.NetworkBookRepository
+import ru.oraora.books.data.network.BookApiService
 
 interface AppContainer {
     val bookRepository: BookRepository
 }
 
 class DefaultAppContainer: AppContainer {
-    private val baseUrl = "https://www.googleapis.com/books/v1/"
+    private val baseUrl = "https://www.googleapis.com"
 
     private val gson = GsonBuilder()
         .registerTypeAdapter(IdListResponse::class.java, IdListResponseDeserializer())
         .create()
 
     private val retrofit = Retrofit.Builder()
-        .addConverterFactory(GsonConverterFactory.create(gson))
+        .addConverterFactory(OGsonConverterFactory.create(gson))
         .baseUrl(baseUrl)
         .build()
 

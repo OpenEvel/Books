@@ -19,21 +19,28 @@ import androidx.compose.ui.unit.dp
 import ru.oraora.books.R
 import ru.oraora.books.viewmodel.BookUiState
 import androidx.compose.foundation.lazy.items
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import ru.oraora.books.data.models.Book
+import ru.oraora.books.viewmodel.BookViewModel
+import ru.oraora.books.viewmodel.NetworkState
 
 @Composable
 fun HomeScreen(
-    bookUiState: BookUiState,
-    retryAction: () -> Unit,
+    bookViewModel: BookViewModel,
+    uiState: BookUiState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    when(bookUiState) {
-        is BookUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
-        is BookUiState.Success -> ExampleIdList(
-            idList = bookUiState.idList,
+    when(uiState.networkState) {
+        NetworkState.LOADING -> LoadingScreen(modifier = modifier.fillMaxSize())
+        NetworkState.SUCCESS -> BooksList(
+            books = uiState.books,
             contentPadding = contentPadding,
             modifier = Modifier.fillMaxSize())
-        is BookUiState.Error -> ErrorScreen(retryAction, modifier = modifier.fillMaxSize())
+        NetworkState.ERROR -> ErrorScreen(
+            retryAction = {bookViewModel.getBooks()},
+            modifier = modifier.fillMaxSize())
     }
 }
 
@@ -47,8 +54,8 @@ fun LoadingScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ExampleIdList(
-    idList: List<String>,
+fun BooksList(
+    books: List<Book>,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)) {
     LazyColumn(
@@ -56,8 +63,8 @@ fun ExampleIdList(
         modifier=modifier.padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(items=idList) {id ->
-            Text(text=id)
+        items(items=books) {book ->
+            Text(text= book.title)
         }
     }
 }

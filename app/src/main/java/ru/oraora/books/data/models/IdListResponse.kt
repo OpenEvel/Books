@@ -1,4 +1,4 @@
-package ru.oraora.books.entity
+package ru.oraora.books.data.models
 
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer

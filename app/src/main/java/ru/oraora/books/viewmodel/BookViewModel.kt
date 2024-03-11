@@ -8,31 +8,53 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.oraora.books.BookApplication
-import ru.oraora.books.data.BookRepository
+import ru.oraora.books.data.models.Book
+import ru.oraora.books.data.repository.BookRepository
 import java.io.IOException
 
-sealed interface BookUiState {
-    data class Success(val idList: List<String>) : BookUiState
-    object Error : BookUiState
-    object Loading : BookUiState
-}
-
 class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
-    var bookUiState : BookUiState by mutableStateOf(BookUiState.Loading)
-        private set
+
+    private val _uiState = MutableStateFlow(BookUiState())
+    val uiState: StateFlow<BookUiState> = _uiState
 
     init {
-        getIdList("jazz+history")
+        getBooks()
+    }
+    fun updateCurrentBook(book: Book) {
+        _uiState.update {
+            it.copy(
+                selectedBook = book,
+            )
+        }
     }
 
-    fun getIdList(query : String) {
+    fun getBooks() {
+        // Обновляем состояние - начинаем загрузку книг
+        _uiState.update {
+            it.copy(
+                networkState = NetworkState.LOADING,
+            )
+        }
+
+        // Начинаем загрузку книг
         viewModelScope.launch {
-            bookUiState = try {
-                BookUiState.Success(bookRepository.getIdBooks(query))
+            var listBooks: List<Book> = emptyList()
+            var networkState: NetworkState = NetworkState.SUCCESS
+            try {
+                listBooks = bookRepository.getBooks(_uiState.value.searchText)
             } catch (e: IOException) {
-                BookUiState.Error
+                networkState = NetworkState.ERROR
+            }
+            _uiState.update {
+                it.copy(
+                    books = listBooks,
+                    networkState = networkState
+                )
             }
         }
     }

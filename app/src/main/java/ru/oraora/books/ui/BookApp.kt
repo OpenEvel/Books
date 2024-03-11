@@ -10,6 +10,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -22,6 +24,9 @@ import ru.oraora.books.viewmodel.BookViewModel
 @Composable
 fun BookApp() {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
+    val uiState by bookViewModel.uiState.collectAsState()
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = { BookTopAppBar(scrollBehavior = scrollBehavior) }
@@ -29,10 +34,9 @@ fun BookApp() {
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
-            val amphibiansViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
             HomeScreen(
-                bookUiState = amphibiansViewModel.bookUiState,
-                retryAction = { amphibiansViewModel.getIdList("jazz+history") },
+                bookViewModel = bookViewModel,
+                uiState = uiState,
                 contentPadding = it,
             )
         }
