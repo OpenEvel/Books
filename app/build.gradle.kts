@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.gson)
     implementation(libs.converter.gson)
+    implementation(libs.kotlin.reflect)
 
     testImplementation(libs.junit)
 

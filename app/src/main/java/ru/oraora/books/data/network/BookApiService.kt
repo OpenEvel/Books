@@ -1,21 +1,21 @@
 package ru.oraora.books.data.network
 
-import retrofit2.converter.ogson.annotations.ExtractField
+import retrofit2.converter.ogson.annotations.Extract
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.data.models.BookResponse
-import ru.oraora.books.data.models.IdListResponse
 
 interface BookApiService {
     @GET("/books/v1/volumes")
+    @Extract("items")
+    @Extract("id")
     suspend fun getIdBooks(
         @Query("q") query : String
-    ): IdListResponse
+    ): List<String>
 
     @GET("/books/v1/volumes/{id}")
-    @ExtractField("volumeInfo")
+    @Extract("volumeInfo")
     suspend fun getBookById(
         @Path("id") id: String
     ): Book

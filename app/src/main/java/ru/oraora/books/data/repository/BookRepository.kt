@@ -11,9 +11,9 @@ class NetworkBookRepository(
     private val bookApiService: BookApiService,
 ): BookRepository {
     override suspend fun getBooks(query: String): List<Book> {
-        val idResponse = bookApiService.getIdBooks(query)
         val books =  mutableListOf<Book>()
-        idResponse.ids.forEach {id ->
+        val ids: List<String> = bookApiService.getIdBooks(query)
+        ids.forEach {id ->
             books.add(bookApiService.getBookById(id))
         }
         return books

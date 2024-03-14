@@ -1,16 +1,17 @@
 package retrofit2.converter.ogson
 
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonIOException
 import com.google.gson.JsonParser
 import com.google.gson.TypeAdapter
-import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import okhttp3.ResponseBody
 import retrofit2.Converter
-import retrofit2.converter.ogson.annotations.ExtractField
+import retrofit2.converter.ogson.annotations.Extract
+import retrofit2.converter.ogson.annotations.Extracts
 import java.io.IOException
 
 class OGsonResponseBodyConverter<T>(
@@ -23,20 +24,29 @@ class OGsonResponseBodyConverter<T>(
         val result: T
 
         val jsonReader: JsonReader = gson.newJsonReader(value.charStream())
-
-        val extractFields = annotations.filterIsInstance<ExtractField>()
+        val extracts = getExtracts(annotations)
         // Если у нас есть хотя обдна аннотация, что нужно извлечь поле
-        if (extractFields.isNotEmpty()) {
-            val extractField = extractFields[0]
-            println(extractField)
-            val json: JsonElement = value.use {
+        if (extracts.isNotEmpty()) {
+            // Парсим вcё в json объект
+            var json: JsonElement? = value.use {
                 jsonReader.use {reader ->
                     JsonParser.parseReader(reader)
                 }
             }
-            val subJsonElement = json.asJsonObject?.get(extractField.fieldName)
 
-            result = adapter.fromJsonTree(subJsonElement)
+            extracts.forEach {extr ->
+                json = if (json != null && json!!.isJsonArray) {
+                    val newJson = JsonArray()
+                    json?.asJsonArray?.forEach {
+                        newJson.add(it?.asJsonObject?.get(extr.field))
+                    }
+                    newJson
+                } else {
+                    json?.asJsonObject?.get(extr.field)
+                }
+            }
+
+            result = adapter.fromJsonTree(json)
 
         } else {
             // Иначе стандартная обработка gson
@@ -48,6 +58,17 @@ class OGsonResponseBodyConverter<T>(
             }
         }
         return result
+    }
+
+    private fun getExtracts(annotations: Array<Annotation>): List<Extract> {
+        val resExtracts = mutableListOf<Extract>()
+        annotations.forEach {
+            when (it) {
+                is Extract -> resExtracts.add(it)
+                is Extracts -> resExtracts.addAll(it.value)
+            }
+        }
+        return resExtracts
     }
 }
 
