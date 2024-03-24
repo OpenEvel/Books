@@ -1,4 +1,4 @@
-package retrofit2.converter.ogson.annotations
+package retrofit2.converter.ogson.extract
 
 // Аннотация Для извлечения поля из ответа и подстановка поля вместо ответа
 @JvmRepeatable(Extracts::class)

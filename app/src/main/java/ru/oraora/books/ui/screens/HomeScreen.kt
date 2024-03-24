@@ -19,8 +19,6 @@ import androidx.compose.ui.unit.dp
 import ru.oraora.books.R
 import ru.oraora.books.viewmodel.BookUiState
 import androidx.compose.foundation.lazy.items
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.oraora.books.data.models.Book
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.NetworkState

@@ -1,6 +1,6 @@
 package ru.oraora.books.data.network
 
-import retrofit2.converter.ogson.annotations.Extract
+import retrofit2.converter.ogson.extract.Extract
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -15,7 +15,6 @@ interface BookApiService {
     ): List<String>
 
     @GET("/books/v1/volumes/{id}")
-    @Extract("volumeInfo")
     suspend fun getBookById(
         @Path("id") id: String
     ): Book

@@ -27,4 +27,3 @@ class OGsonRequestBodyConverter<T>(private val gson: Gson, private val adapter: 
         return buffer.readByteString().toRequestBody(MEDIA_TYPE)
     }
 }
-
