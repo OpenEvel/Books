@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.converter.gson)
     implementation(libs.kotlin.reflect)
+    implementation(libs.jetbrains.kotlin.reflect)
 
     testImplementation(libs.junit)
 
