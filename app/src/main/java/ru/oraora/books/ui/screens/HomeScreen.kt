@@ -62,7 +62,7 @@ fun BooksList(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(items=books) {book ->
-            Text(text= book.title)
+            Text(text = book.title ?: "lol")
         }
     }
 }

@@ -7,17 +7,17 @@ import retrofit2.converter.ogson.https.Https
 
 data class Book(
     @Extract("volumeInfo")
-    val title: String,
+    val title: String?,
     @Extract("volumeInfo")
     val authors: List<String>,
     @Extract("volumeInfo")
-    val publisher: String,
+    val publisher: String?,
     @Extract("volumeInfo")
-    val publishedDate: String,
+    val publishedDate: String?,
     @Extract("volumeInfo")
     val description: String?,
     @Extract("volumeInfo")
-    val pageCount: Long,
+    val pageCount: Long?,
     @Extract("volumeInfo")
     val language: String?,
     @Extract("accessInfo")
@@ -32,5 +32,5 @@ data class Book(
     @Extract("imageLinks")
     @SerializedName("thumbnail")
     @Https
-    val imageLink: String,
+    val imageLink: String?,
 )

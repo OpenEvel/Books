@@ -26,12 +26,4 @@ class NetworkBookRepository(
         val books: List<Book> = requests.map { it.await() }
         books
     }
-
-//    override suspend fun getBooks(query: String): List<Book> {
-//        // список id книг для поискового запроса query
-//        val ids: List<String> = bookApiService.getIdBooks(query)
-//        // Результирующий списко книг. Чтобы получить ответ по каждому запрсоу его нужно ожидать
-//        val books: List<Book> = ids.map { bookApiService.getBookById(it) }
-//        return books
-//    }
 }

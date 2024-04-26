@@ -12,6 +12,8 @@ import retrofit2.converter.ogson.https.isContainsHttpsAnnotation
 import retrofit2.converter.ogson.https.toHttps
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
+import java.math.BigDecimal
+import java.math.BigInteger
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.javaType
 
@@ -26,7 +28,20 @@ class OgsonUniversalAdapter : JsonDeserializer<Any?> {
                 when {
                     prim.isString -> prim.asString
                     prim.isBoolean -> prim.asBoolean
-                    prim.isNumber -> prim.asNumber
+                    prim.isNumber -> {
+                        when (typeOfT) {
+                            Byte::class.java -> prim.asByte
+                            Short::class.java -> prim.asShort
+                            Int::class.java -> prim.asInt
+                            Long::class.java -> prim.asLong
+                            BigInteger::class.java -> prim.asBigInteger
+                            Float::class.java -> prim.asFloat
+                            Double::class.java -> prim.asDouble
+                            BigDecimal::class.java -> prim.asBigDecimal;
+                            else -> null
+                        }
+
+                    }
                     else -> null
                 }
             }
