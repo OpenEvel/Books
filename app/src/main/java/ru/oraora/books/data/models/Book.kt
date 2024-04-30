@@ -9,7 +9,7 @@ data class Book(
     @Extract("volumeInfo")
     val title: String?,
     @Extract("volumeInfo")
-    val authors: List<String>,
+    val authors: List<String>?,
     @Extract("volumeInfo")
     val publisher: String?,
     @Extract("volumeInfo")

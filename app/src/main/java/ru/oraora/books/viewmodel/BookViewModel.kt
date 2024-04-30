@@ -22,9 +22,9 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(BookUiState())
     val uiState: StateFlow<BookUiState> = _uiState
 
-    init {
-        getBooks()
-    }
+//    init {
+//        getBooks()
+//    }
     fun updateCurrentBook(book: Book) {
         _uiState.update {
             it.copy(
@@ -33,27 +33,43 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         }
     }
 
+    fun onQueryChange(query: String) {
+        _uiState.update {
+            it.copy(
+                query = query
+            )
+        }
+    }
+
+    fun onSearchActiveChange(active: Boolean) {
+        _uiState.update {
+            it.copy(
+                isSearchActive = active
+            )
+        }
+    }
+
     fun getBooks() {
         // Обновляем состояние - начинаем загрузку книг
         _uiState.update {
             it.copy(
-                networkState = NetworkState.LOADING,
+                searchState = SearchState.LOADING,
             )
         }
 
         // Начинаем загрузку книг
         viewModelScope.launch {
             var listBooks: List<Book> = emptyList()
-            var networkState: NetworkState = NetworkState.SUCCESS
+            var networkState: SearchState = SearchState.SUCCESS
             try {
-                listBooks = bookRepository.getBooks(_uiState.value.searchText)
+                listBooks = bookRepository.getBooks(_uiState.value.query)
             } catch (e: IOException) {
-                networkState = NetworkState.ERROR
+                networkState = SearchState.ERROR
             }
             _uiState.update {
                 it.copy(
                     books = listBooks,
-                    networkState = networkState
+                    searchState = networkState
                 )
             }
         }

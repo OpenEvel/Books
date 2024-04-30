@@ -16,7 +16,7 @@ class NetworkBookRepository(
 ): BookRepository {
     override suspend fun getBooks(query: String): List<Book> = withContext(Dispatchers.IO)  {
         // список id книг для поискового запроса query
-        val ids: List<String> = bookApiService.getIdBooks(query)
+        val ids: List<String> = bookApiService.getIdBooks(query) ?: emptyList<String>()
         // Список deferred запросов информации по каждому id
         // Как только вызываем async - запрос выполняется, не блокируя другие запросы
         val requests: List<Deferred<Book>> = ids.map {

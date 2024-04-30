@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.kotlin.reflect)
     implementation(libs.jetbrains.kotlin.reflect)
+    implementation(libs.androidx.material.icons.extended)
 
     testImplementation(libs.junit)
 
