@@ -12,7 +12,7 @@ interface BookApiService {
     @Extract("id")
     suspend fun getIdBooks(
         @Query("q") query : String
-    ): List<String>?
+    ): List<String>
 
     @GET("/books/v1/volumes/{id}")
     suspend fun getBookById(

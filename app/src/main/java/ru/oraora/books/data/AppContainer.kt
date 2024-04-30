@@ -16,6 +16,7 @@ class DefaultAppContainer: AppContainer {
     private val baseUrl = "https://www.googleapis.com"
 
     private val gson = GsonBuilder()
+        .serializeNulls()
         .registerTypeHierarchyAdapter(Any::class.java, OgsonUniversalAdapter())
         .create()
 

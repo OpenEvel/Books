@@ -2,6 +2,7 @@ package retrofit2.converter.ogson
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
+import com.google.gson.JsonNull
 import com.google.gson.JsonParser
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
@@ -17,7 +18,7 @@ class OGsonResponseBodyConverter<T>(
     private val annotations: Array<Annotation>,
 ) : Converter<ResponseBody, T> {
     @Throws(IOException::class)
-    override fun convert(value: ResponseBody): T {
+    override fun convert(value: ResponseBody): T? {
         val jsonReader: JsonReader = gson.newJsonReader(value.charStream())
 
 
@@ -32,6 +33,11 @@ class OGsonResponseBodyConverter<T>(
             json = getSubJson(json, extractAnnotation.field)
         }
 
+        if (json == null) {
+            json = JsonNull.INSTANCE
+        }
+
+//        return null
         return adapter.fromJsonTree(json)
     }
 }
