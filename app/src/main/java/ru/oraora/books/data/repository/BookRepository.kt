@@ -15,10 +15,15 @@ class NetworkBookRepository(
     private val bookApiService: BookApiService,
 ): BookRepository {
     override suspend fun getBooks(query: String): List<Book> = withContext(Dispatchers.IO)  {
+
         // список id книг для поискового запроса query
         val ids: List<String> = try {
             bookApiService.getIdBooks(query)
         } catch (e: KotlinNullPointerException) {
+            // Ответ запроса null
+            emptyList()
+        } catch (e: retrofit2.HttpException) {
+            // запрос query = ""
             emptyList()
         }
         // Список deferred запросов информации по каждому id
