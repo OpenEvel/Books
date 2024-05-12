@@ -1,8 +1,15 @@
 package ru.oraora.books.ui.screens.osearch
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.ViewTreeObserver
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.EaseInOutBack
+import androidx.compose.animation.core.EaseInOutCirc
+import androidx.compose.animation.core.EaseOutBounce
+import androidx.compose.animation.core.EaseOutElastic
+import androidx.compose.animation.core.EaseOutQuint
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -17,6 +24,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
@@ -26,7 +34,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -35,10 +42,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.History
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -52,7 +57,9 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -125,7 +132,11 @@ fun TopSearchBar(
     Layout(
         content = {
             Box(
-                modifier = Modifier.layoutId(firstLineId)
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .layoutId(firstLineId)
+                    .height(OSearchBarDefaults.firstLineHeight)
+                    .fillMaxWidth()
             ) {
                 firstLine()
             }
@@ -134,7 +145,7 @@ fun TopSearchBar(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .layoutId(secondLineId)
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = OSearchBarDefaults.secondLineVerticalPadding)
             ) {
                 OSearchBar(
                     query = query,
@@ -304,7 +315,7 @@ fun OSearchBar(
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon?.let { trailing ->
                     {
-                        if (animationProgress.value > 0) {
+                        if (active) {
                             IconButton(
                                 modifier = Modifier
                                     .rotate(animationProgress.value * 360)
@@ -342,26 +353,29 @@ fun OSearchBar(
                     HorizontalDivider(color = colors.dividerColor)
                     LazyColumn {
                         items(searchHistory) {
-                            Row(verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .clickable {
-                                        onActiveChange(false)
-                                        keyboardController?.hide()
-                                        onQueryChange(it)
-                                        onSearch()
-                                    }
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp)
-                            ) {
-                                Icon(
-                                    Icons.Outlined.History,
-                                    contentDescription = null,
-                                    modifier = Modifier.padding(start = 16.dp, end = 8.dp)
-                                )
-                                Text(
-                                    text = it,
-                                    modifier = Modifier.weight(1f)
-                                )
+                            if (!(it == query && !active)) {
+                                Row(verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .clickable {
+                                            onActiveChange(false)
+                                            keyboardController?.hide()
+                                            onQueryChange(it)
+                                            onSearch()
+                                        }
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.History,
+                                        contentDescription = null,
+                                        modifier = Modifier.padding(start = 16.dp, end = 8.dp)
+                                    )
+                                    Text(
+                                        text = it,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+
                             }
                         }
                     }
@@ -372,6 +386,7 @@ fun OSearchBar(
 }
 
 @Composable
+@Stable
 fun keyboardAsState(): State<Boolean> {
     val view = LocalView.current
     var isImeVisible by remember { mutableStateOf(false) }
@@ -463,10 +478,15 @@ fun OSearchBarField(
     )
 }
 
-@ExperimentalMaterial3Api
+
 object OSearchBarDefaults {
     val elevation: Dp = 6.dp
+    val firstLineHeight: Dp = 56.dp
     val fieldHeight: Dp = 56.dp
+    val secondLineVerticalPadding: Dp = 4.dp
+    val secondLineHeight: Dp = fieldHeight + secondLineVerticalPadding * 2
+    val topHeight: Dp = fieldHeight + secondLineHeight
+
     val fieldSideMargin: Dp = 16.dp
     val iconOffsetX = 4.dp
 
@@ -479,10 +499,16 @@ object OSearchBarDefaults {
         easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
     )
 
+//    val AnimationExitFloatSpec: FiniteAnimationSpec<Float> = tween(
+//        durationMillis = 350,
+//        delayMillis = 100,
+//        easing = CubicBezierEasing(0.0f, 1.0f, 0.0f, 1.0f),
+//    )
+
     val AnimationExitFloatSpec: FiniteAnimationSpec<Float> = tween(
         durationMillis = 350,
         delayMillis = 100,
-        easing = CubicBezierEasing(0.0f, 1.0f, 0.0f, 1.0f),
+        easing = EaseOutQuint
     )
 
     @Composable
@@ -495,6 +521,7 @@ object OSearchBarDefaults {
     }
 
     @Composable
+    @Stable
     fun colors(): OSearchBarColors {
         return OSearchBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -510,7 +537,7 @@ object OSearchBarDefaults {
 
 }
 
-
+@Immutable
 class OSearchBarColors(
     val containerColor: Color,
     val dividerColor: Color,
@@ -523,6 +550,7 @@ class OSearchBarColors(
 ) {
     val inputFieldColors: TextFieldColors
         @Composable
+        @Stable
         get() = TextFieldDefaults.colors(
             focusedTextColor = textColor,
             unfocusedTextColor = textColor,

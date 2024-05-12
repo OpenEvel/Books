@@ -17,6 +17,7 @@ gson = "2.10.1"
 kotlinReflect = "2.0.0-Beta4"
 kotlinReflectVersion = "2.0.0-RC1"
 materialIconsExtended = "1.7.0-alpha07"
+uiToolingPreview = "1.7.0-alpha08"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,6 +43,7 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = "2.0.0-RC1" }
 jetbrains-kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlinReflectVersion" }
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "uiToolingPreview" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
