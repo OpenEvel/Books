@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.jetbrains.kotlin.reflect)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.navigation.compose)
 
     testImplementation(libs.junit)
 

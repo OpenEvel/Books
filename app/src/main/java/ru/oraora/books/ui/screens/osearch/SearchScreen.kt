@@ -1,7 +1,6 @@
 package ru.oraora.books.ui.screens.osearch
 
 
-import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -27,44 +26,30 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Book
-import androidx.compose.material.icons.outlined.Bookmarks
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.ui.theme.BooksTheme
 import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.SearchState
@@ -73,12 +58,12 @@ import ru.oraora.books.viewmodel.SearchState
 fun SearchScreen(
     bookViewModel: BookViewModel,
     uiState: BookUiState,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
     searchHistory: MutableList<String> = rememberSaveable { mutableListOf<String>() }
 ) {
     Box(
-        modifier = Modifier.padding(contentPadding.copy(top=0.dp))
+        modifier = modifier
     ) {
         Box(
             modifier = Modifier
@@ -173,7 +158,8 @@ fun LazyListScope.FirstEnterFrame() {
                 Icons.Outlined.Book,
                 contentDescription = null,
                 modifier = Modifier.size(200.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f)
+//                tint = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+                 tint = MaterialTheme.colorScheme.inversePrimary,
             )
         }
     }

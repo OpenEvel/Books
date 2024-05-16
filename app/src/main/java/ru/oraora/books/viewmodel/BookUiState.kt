@@ -9,6 +9,13 @@ enum class SearchState {
     ERROR
 }
 
+enum class BookAppScreen(val title: String) {
+    Search(title = "search"),
+    Advice(title = "advice"),
+    Favorite(title = "favorite"),
+    BookInfo(title = "book_info"),
+}
+
 data class BookUiState(
     val query: String = "",
     val isSearchActive: Boolean = false,
@@ -16,4 +23,5 @@ data class BookUiState(
     val books: List<Book> = emptyList(),
     val selectedBook: Book? = null,
     val isShowingBookPage: Boolean = false,
+    val currentScreen: BookAppScreen = BookAppScreen.Search
 )

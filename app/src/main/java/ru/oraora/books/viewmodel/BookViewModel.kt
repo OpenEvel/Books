@@ -33,6 +33,14 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         }
     }
 
+    fun updateCurrentScreen(screen: BookAppScreen) {
+        _uiState.update {
+            it.copy(
+                currentScreen = screen,
+            )
+        }
+    }
+
     fun onQueryChange(query: String) {
         _uiState.update {
             it.copy(
