@@ -59,6 +59,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
@@ -73,6 +74,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
@@ -88,8 +91,10 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.PlatformTextInputModifierNode
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
@@ -116,6 +121,7 @@ fun TopSearchBar(
     onSearch: () -> Unit,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
+    searchRequester: FocusRequester,
     placeholder: (@Composable () -> Unit)? = null,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
@@ -153,6 +159,7 @@ fun TopSearchBar(
                     onSearch = onSearch,
                     active = active,
                     onActiveChange = onActiveChange,
+                    searchRequester = searchRequester,
                     placeholder = placeholder,
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
@@ -212,6 +219,7 @@ fun OSearchBar(
     onSearch: () -> Unit,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
+    searchRequester: FocusRequester,
     searchHistory: MutableList<String>,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -302,6 +310,7 @@ fun OSearchBar(
                 query = query,
                 onQueryChange = onQueryChange,
                 onActiveChange = onActiveChange,
+                searchRequester = searchRequester,
                 onSearch = {
                     // Скрыть клавиатуру после поиска
                     onActiveChange(false)
@@ -411,6 +420,7 @@ fun OSearchBarField(
     query: String,
     onQueryChange: (String) -> Unit,
     onActiveChange: (Boolean) -> Unit,
+    searchRequester: FocusRequester,
     onSearch: () -> Unit,
     enabled: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
@@ -430,6 +440,7 @@ fun OSearchBarField(
         }
     }
 
+
     val textColor = LocalTextStyle.current.color.takeOrElse {
         colors.textColor
     }
@@ -439,7 +450,13 @@ fun OSearchBarField(
         onValueChange = onQueryChange,
         modifier = modifier
             .fillMaxWidth()
-            .onFocusChanged { onActiveChange(it.isFocused) },
+            .focusRequester(searchRequester)
+            .onFocusChanged {
+                if (!it.isFocused) {
+                    focusManager.clearFocus()
+                }
+                onActiveChange(it.isFocused)
+            },
         singleLine = true,
         textStyle = LocalTextStyle.current.merge(TextStyle(color = textColor)),
         cursorBrush = SolidColor(colors.cursorColor),
@@ -576,6 +593,7 @@ fun MyNewSearchBarPreview() {
     var query by rememberSaveable { mutableStateOf("") }
     var active by rememberSaveable { mutableStateOf(false) }
     val searchHistory = rememberSaveable { mutableListOf("A", "B", "C") }
+    val searchRequester = rememberSaveable { FocusRequester() }
     Surface(modifier = Modifier.wrapContentSize(Alignment.Center)) {
         OSearchBar(
             query = query,
@@ -583,6 +601,7 @@ fun MyNewSearchBarPreview() {
             onSearch = { },
             active = active,
             onActiveChange = { active = it },
+            searchRequester = rememberSaveable { FocusRequester() },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             searchHistory = searchHistory,
         )

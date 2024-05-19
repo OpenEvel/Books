@@ -15,10 +15,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,37 +35,115 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.ui.screens.osearch.SearchScreen
 import ru.oraora.books.ui.screens.osearch.copy
 import ru.oraora.books.ui.theme.BooksTheme
 import ru.oraora.books.viewmodel.BookAppScreen
 import ru.oraora.books.viewmodel.BookViewModel
+import kotlin.coroutines.CoroutineContext
+
+//@Composable
+//fun BookApp1() {
+//    val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
+//    val uiState by bookViewModel.uiState.collectAsState()
+//
+//
+//    //Create NavController
+//    val navController = rememberNavController()
+//
+//    Scaffold(
+//        bottomBar = {
+//            MyNavigationBar(
+//                navigateTo = { navController.navigate(it) },
+//                activateSearch = { bookViewModel.onSearchActiveChange(true) }
+//            )
+//        }
+//    ) { contentPadding ->
+//        NavHost(
+//            navController = navController,
+//            startDestination = BookAppScreen.Search.title
+//        ) {
+//            composable(route = BookAppScreen.Advice.title) {
+//                Box(
+//                    contentAlignment = Alignment.Center,
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .padding(contentPadding.copy(top = 0.dp))
+//                ) {
+//                    Text("Advice")
+//                }
+//            }
+//
+//            composable(route = BookAppScreen.Search.title) {
+//                SearchScreen(
+//                    bookViewModel = bookViewModel,
+//                    uiState = uiState,
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .padding(contentPadding.copy(top = 0.dp))
+//                )
+//            }
+//
+//            composable(route = BookAppScreen.Favorite.title) {
+//                Box(
+//                    contentAlignment = Alignment.Center,
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .padding(contentPadding.copy(top = 0.dp))
+//                ) {
+//                    Text("Favorite")
+//                }
+//            }
+//            composable(route = BookAppScreen.BookInfo.title) {
+//                Box(
+//                    contentAlignment = Alignment.Center,
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .padding(contentPadding.copy(top = 0.dp))
+//                ) {
+//                    Text("BookInfo")
+//                }
+//
+//            }
+//        }
+//
+////        SearchScreen(
+////            bookViewModel = bookViewModel,
+////            uiState = uiState,
+////            contentPadding = it,
+////        )
+//    }
+//}
 
 @Composable
 fun BookApp() {
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val uiState by bookViewModel.uiState.collectAsState()
-
-
-    //Create NavController
-    val navController = rememberNavController()
+    val currentScreen = remember { mutableStateOf<BookAppScreen>(BookAppScreen.Search) }
+    val searchRequester = remember { FocusRequester() }
 
     Scaffold(
         bottomBar = {
             MyNavigationBar(
-                currentScreen = uiState.currentScreen,
-                navigateTo = { navController.navigate(it) },
-                updateCurrentScreen = { bookViewModel.updateCurrentScreen(it) } ,
-                activateSearch = { bookViewModel.onSearchActiveChange(true) }
+                navigateTo = { },
+                activateSearch = {
+//                    coroutineScope.launch(Dispatchers.Unconfined) {
+//                        searchRequester.requestFocus();
+//                    }
+                    searchRequester.requestFocus();
+                    bookViewModel.onSearchActiveChange(true);
+                },
+                currentScreen = currentScreen
             )
         }
     ) { contentPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BookAppScreen.Search.title
-        ) {
-            composable(route = BookAppScreen.Advice.title) {
+
+        when (currentScreen.value) {
+            BookAppScreen.Advice ->
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -66,19 +152,18 @@ fun BookApp() {
                 ) {
                     Text("Advice")
                 }
-            }
 
-            composable(route = BookAppScreen.Search.title) {
+            BookAppScreen.Search ->
                 SearchScreen(
                     bookViewModel = bookViewModel,
                     uiState = uiState,
+                    searchRequester = searchRequester,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(contentPadding.copy(top = 0.dp))
                 )
-            }
 
-            composable(route = BookAppScreen.Favorite.title) {
+            BookAppScreen.Favorite ->
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -87,8 +172,8 @@ fun BookApp() {
                 ) {
                     Text("Favorite")
                 }
-            }
-            composable(route = BookAppScreen.BookInfo.title) {
+
+            BookAppScreen.BookInfo ->
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -97,84 +182,73 @@ fun BookApp() {
                 ) {
                     Text("BookInfo")
                 }
-
-            }
         }
-
-//        SearchScreen(
-//            bookViewModel = bookViewModel,
-//            uiState = uiState,
-//            contentPadding = it,
-//        )
     }
 }
 
+@Stable
 @Composable
 fun MyNavigationBar(
     navigateTo: (String) -> Unit,
-    currentScreen: BookAppScreen,
-    updateCurrentScreen: (BookAppScreen) -> Unit,
     activateSearch: () -> Unit,
-) {
-    Box() {
-
+    currentScreen: MutableState<BookAppScreen> = rememberSaveable {
+        mutableStateOf<BookAppScreen>(
+            BookAppScreen.Search
+        )
     }
-    NavigationBar(
-        tonalElevation = 0.dp
+) {
+
+    Surface(
+        shadowElevation = 12.dp, // play with the elevation values
     ) {
+        NavigationBar(
+            tonalElevation = 0.dp
+        ) {
 
-        // Advice Screen
-        NavigationBarItem(
-            selected = currentScreen == BookAppScreen.Advice,
-            onClick = {
-                navigateTo(BookAppScreen.Advice.title)
-                updateCurrentScreen(BookAppScreen.Advice)
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(
-                        id = R.drawable.asterisk
-                    ), contentDescription = null
-                )
-            })
+            // Advice Screen
+            NavigationBarItem(
+                selected = currentScreen.value == BookAppScreen.Advice,
+                onClick = {
+                    currentScreen.value = BookAppScreen.Advice
+                    navigateTo(BookAppScreen.Advice.title)
+                },
+                icon = {
+                    Icon(
+                        painter = painterResource(
+                            id = R.drawable.asterisk
+                        ), contentDescription = null
+                    )
+                })
 
-        // Search Screen
-        NavigationBarItem(
-            selected = currentScreen == BookAppScreen.Search,
-            onClick = {
-                if (currentScreen == BookAppScreen.Search) {
-                    activateSearch()
-                } else {
-                    navigateTo(BookAppScreen.Search.title)
-                    updateCurrentScreen(BookAppScreen.Search)
-                }
-            },
-            icon = {
-                Icon(
-                    Icons.Default.Search, contentDescription = null
-                )
-            })
+            // Search Screen
+            NavigationBarItem(
+                selected = currentScreen.value == BookAppScreen.Search,
+                onClick = {
+                    if (currentScreen.value == BookAppScreen.Search) {
+                        activateSearch()
+                    } else {
+                        currentScreen.value = BookAppScreen.Search
+                        navigateTo(BookAppScreen.Search.title)
+                    }
+                },
+                icon = {
+                    Icon(
+                        Icons.Default.Search, contentDescription = null
+                    )
+                })
 
-        // Favorite Screen
-        NavigationBarItem(
-            selected = currentScreen == BookAppScreen.Favorite,
-            onClick = {
-                navigateTo(BookAppScreen.Favorite.title)
-                updateCurrentScreen(BookAppScreen.Favorite)
-            },
-            icon = {
-                val bookmarksIcon: ImageVector =
-                    if (currentScreen == BookAppScreen.Favorite) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks
-                Icon(bookmarksIcon, contentDescription = null)
-            })
+            // Favorite Screen
+            NavigationBarItem(
+                selected = currentScreen.value == BookAppScreen.Favorite,
+                onClick = {
+                    currentScreen.value = BookAppScreen.Favorite
+                    navigateTo(BookAppScreen.Favorite.title)
+                },
+                icon = {
+                    val bookmarksIcon: ImageVector =
+                        if (currentScreen.value == BookAppScreen.Favorite) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks
+                    Icon(bookmarksIcon, contentDescription = null)
+                })
+        }
     }
 }
-
-//@Preview("Light Theme")
-//@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
-//@Composable
-//fun MyNavigationBarPreview() {
-//    BooksTheme {
-//        MyNavigationBar()
-//    }
-//}

@@ -22,22 +22,23 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(BookUiState())
     val uiState: StateFlow<BookUiState> = _uiState
 
-//    init {
-//        getBooks()
-//    }
     fun updateCurrentBook(book: Book) {
-        _uiState.update {
-            it.copy(
-                selectedBook = book,
-            )
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    selectedBook = book,
+                )
+            }
         }
     }
 
     fun updateCurrentScreen(screen: BookAppScreen) {
-        _uiState.update {
-            it.copy(
-                currentScreen = screen,
-            )
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    currentScreen = screen,
+                )
+            }
         }
     }
 
@@ -86,7 +87,8 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BookApplication)
+                val application =
+                    (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BookApplication)
                 val bookRepository = application.container.bookRepository
                 BookViewModel(bookRepository = bookRepository)
             }
