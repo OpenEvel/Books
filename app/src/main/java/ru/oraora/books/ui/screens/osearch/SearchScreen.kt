@@ -53,14 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
-import ru.oraora.books.viewmodel.SearchState
+import ru.oraora.books.viewmodel.SearchFrame
 
 @Composable
 fun SearchScreen(
     bookViewModel: BookViewModel,
-    uiState: BookUiState,
     searchRequester: FocusRequester,
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
@@ -88,13 +86,13 @@ fun SearchScreen(
                             .wrapContentSize(Alignment.Center)
                     )
                 },
-                query = uiState.query,
+                query = bookViewModel.query,
                 onQueryChange = { bookViewModel.onQueryChange(it) },
                 onSearch = { bookViewModel.getBooks() },
-                active = uiState.isSearchActive,
+                active = bookViewModel.isSearchActive,
                 onActiveChange = { bookViewModel.onSearchActiveChange(it) },
                 searchRequester = searchRequester,
-                animationProgress = OSearchBarDefaults.animationProgress(active = uiState.isSearchActive),
+                animationProgress = OSearchBarDefaults.animationProgress(active = bookViewModel.isSearchActive),
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = { Icon(Icons.Default.Cancel, contentDescription = "Cancel icon") },
                 searchHistory = searchHistory,
@@ -120,14 +118,14 @@ fun SearchScreen(
                     )
                 }
 
-                when (uiState.searchState) {
-                    SearchState.FIRST_ENTER -> FirstEnterFrame()
-                    SearchState.LOADING -> LoadingFrame()
-                    SearchState.ERROR -> ErrorFrame(
+                when (bookViewModel.searchFrame) {
+                    SearchFrame.FIRST_ENTER -> FirstEnterFrame()
+                    SearchFrame.LOADING -> LoadingFrame()
+                    SearchFrame.ERROR -> ErrorFrame(
                         retryAction = { bookViewModel.getBooks() }
                     )
 
-                    SearchState.SUCCESS -> BooksList(books = uiState.books)
+                    SearchFrame.SUCCESS -> BooksList(books = bookViewModel.books)
                 }
             }
         }
@@ -163,7 +161,6 @@ fun LazyListScope.FirstEnterFrame() {
                 Icons.Outlined.Book,
                 contentDescription = null,
                 modifier = Modifier.size(200.dp),
-//                tint = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
                  tint = MaterialTheme.colorScheme.inversePrimary,
             )
         }

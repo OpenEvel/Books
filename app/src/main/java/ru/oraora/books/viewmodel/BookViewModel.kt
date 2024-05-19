@@ -3,6 +3,7 @@ package ru.oraora.books.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -19,68 +20,69 @@ import java.io.IOException
 
 class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(BookUiState())
-    val uiState: StateFlow<BookUiState> = _uiState
+//    private val _uiState = MutableStateFlow(BookUiState())
+//    val uiState: StateFlow<BookUiState> = _uiState
 
-    fun updateCurrentBook(book: Book) {
+    var query: String by mutableStateOf("")
+        private set
+
+    var isSearchActive: Boolean by mutableStateOf(false)
+        private set
+
+    var searchHistory: List<String> by mutableStateOf(emptyList())
+
+    var searchFrame: SearchFrame by mutableStateOf(SearchFrame.FIRST_ENTER)
+        private set
+
+    var books: List<Book> by mutableStateOf(emptyList())
+        private set
+
+    var selectedBook: Book? by mutableStateOf(null)
+        private set
+
+    var currentScreen: Routes by mutableStateOf(Routes.Search)
+        private set
+
+    fun changeSelectedBook(book: Book) {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    selectedBook = book,
-                )
-            }
+            selectedBook = book
         }
     }
 
-    fun updateCurrentScreen(screen: BookAppScreen) {
+    fun changeCurrentScreen(screen: Routes) {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    currentScreen = screen,
-                )
-            }
+            currentScreen = screen
         }
     }
 
-    fun onQueryChange(query: String) {
-        _uiState.update {
-            it.copy(
-                query = query
-            )
+    fun onQueryChange(newQuery: String) {
+        viewModelScope.launch {
+            query = newQuery
         }
     }
 
     fun onSearchActiveChange(active: Boolean) {
-        _uiState.update {
-            it.copy(
-                isSearchActive = active
-            )
+        viewModelScope.launch {
+            isSearchActive = active
         }
     }
 
     fun getBooks() {
         // Обновляем состояние - начинаем загрузку книг
-        _uiState.update {
-            it.copy(
-                searchState = SearchState.LOADING,
-            )
-        }
+        searchFrame = SearchFrame.LOADING
 
         // Начинаем загрузку книг
         viewModelScope.launch {
             var listBooks: List<Book> = emptyList()
-            var networkState: SearchState = SearchState.SUCCESS
+            var networkState: SearchFrame = SearchFrame.SUCCESS
             try {
-                listBooks = bookRepository.getBooks(_uiState.value.query)
+                listBooks = bookRepository.getBooks(query)
             } catch (e: IOException) {
-                networkState = SearchState.ERROR
+                networkState = SearchFrame.ERROR
             }
-            _uiState.update {
-                it.copy(
-                    books = listBooks,
-                    searchState = networkState
-                )
-            }
+
+            books = listBooks
+            searchFrame = networkState
         }
     }
 

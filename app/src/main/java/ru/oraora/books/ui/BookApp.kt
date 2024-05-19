@@ -1,10 +1,15 @@
 package ru.oraora.books.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Bookmarks
 import androidx.compose.material3.Icon
@@ -15,9 +20,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,8 +49,8 @@ import ru.oraora.books.R
 import ru.oraora.books.ui.screens.osearch.SearchScreen
 import ru.oraora.books.ui.screens.osearch.copy
 import ru.oraora.books.ui.theme.BooksTheme
-import ru.oraora.books.viewmodel.BookAppScreen
 import ru.oraora.books.viewmodel.BookViewModel
+import ru.oraora.books.viewmodel.Routes
 import kotlin.coroutines.CoroutineContext
 
 //@Composable
@@ -119,85 +126,80 @@ import kotlin.coroutines.CoroutineContext
 //    }
 //}
 
+val LocalSearchRequester =
+    compositionLocalOf<FocusRequester> { error("No FocusRequester provided") }
+
 @Composable
 fun BookApp() {
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
-    val uiState by bookViewModel.uiState.collectAsState()
-    val currentScreen = remember { mutableStateOf<BookAppScreen>(BookAppScreen.Search) }
+
     val searchRequester = remember { FocusRequester() }
+    CompositionLocalProvider(LocalSearchRequester provides searchRequester) {
 
-    Scaffold(
-        bottomBar = {
-            MyNavigationBar(
-                navigateTo = { },
-                activateSearch = {
-//                    coroutineScope.launch(Dispatchers.Unconfined) {
-//                        searchRequester.requestFocus();
-//                    }
-                    searchRequester.requestFocus();
-                    bookViewModel.onSearchActiveChange(true);
-                },
-                currentScreen = currentScreen
-            )
-        }
-    ) { contentPadding ->
-
-        when (currentScreen.value) {
-            BookAppScreen.Advice ->
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding.copy(top = 0.dp))
-                ) {
-                    Text("Advice")
-                }
-
-            BookAppScreen.Search ->
-                SearchScreen(
-                    bookViewModel = bookViewModel,
-                    uiState = uiState,
-                    searchRequester = searchRequester,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding.copy(top = 0.dp))
+        Scaffold(
+            bottomBar = {
+                BookNavigationBar(
+                    currentScreen = bookViewModel.currentScreen,
+                    changeCurrentScreen = { bookViewModel.changeCurrentScreen(it) },
+                    activateSearch = {
+                        searchRequester.requestFocus();
+                        bookViewModel.onSearchActiveChange(true);
+                    },
                 )
+            }
+        ) { contentPadding ->
 
-            BookAppScreen.Favorite ->
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding.copy(top = 0.dp))
-                ) {
-                    Text("Favorite")
-                }
+            when (bookViewModel.currentScreen) {
+                Routes.Advice ->
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(contentPadding.copy(top = 0.dp))
+                    ) {
+                        Text("Advice")
+                    }
 
-            BookAppScreen.BookInfo ->
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding.copy(top = 0.dp))
-                ) {
-                    Text("BookInfo")
-                }
+                Routes.Search ->
+                    SearchScreen(
+                        bookViewModel = bookViewModel,
+                        searchRequester = searchRequester,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(contentPadding.copy(top = 0.dp))
+                    )
+
+                Routes.Favorite ->
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(contentPadding.copy(top = 0.dp))
+                    ) {
+                        Text("Favorite")
+                    }
+
+                Routes.BookInfo ->
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(contentPadding.copy(top = 0.dp))
+                    ) {
+                        Text("BookInfo")
+                    }
+            }
         }
     }
 }
 
-@Stable
-@Composable
-fun MyNavigationBar(
-    navigateTo: (String) -> Unit,
-    activateSearch: () -> Unit,
-    currentScreen: MutableState<BookAppScreen> = rememberSaveable {
-        mutableStateOf<BookAppScreen>(
-            BookAppScreen.Search
-        )
-    }
-) {
 
+@Composable
+fun BookNavigationBar(
+    currentScreen: Routes,
+    changeCurrentScreen: (Routes) -> Unit,
+    activateSearch: () -> Unit,
+) {
     Surface(
         shadowElevation = 12.dp, // play with the elevation values
     ) {
@@ -207,10 +209,9 @@ fun MyNavigationBar(
 
             // Advice Screen
             NavigationBarItem(
-                selected = currentScreen.value == BookAppScreen.Advice,
+                selected = currentScreen == Routes.Advice,
                 onClick = {
-                    currentScreen.value = BookAppScreen.Advice
-                    navigateTo(BookAppScreen.Advice.title)
+                    changeCurrentScreen(Routes.Advice)
                 },
                 icon = {
                     Icon(
@@ -222,13 +223,12 @@ fun MyNavigationBar(
 
             // Search Screen
             NavigationBarItem(
-                selected = currentScreen.value == BookAppScreen.Search,
+                selected = currentScreen == Routes.Search,
                 onClick = {
-                    if (currentScreen.value == BookAppScreen.Search) {
+                    if (currentScreen == Routes.Search) {
                         activateSearch()
                     } else {
-                        currentScreen.value = BookAppScreen.Search
-                        navigateTo(BookAppScreen.Search.title)
+                        changeCurrentScreen(Routes.Search)
                     }
                 },
                 icon = {
@@ -239,14 +239,13 @@ fun MyNavigationBar(
 
             // Favorite Screen
             NavigationBarItem(
-                selected = currentScreen.value == BookAppScreen.Favorite,
+                selected = currentScreen == Routes.Favorite,
                 onClick = {
-                    currentScreen.value = BookAppScreen.Favorite
-                    navigateTo(BookAppScreen.Favorite.title)
+                    changeCurrentScreen(Routes.Favorite)
                 },
                 icon = {
                     val bookmarksIcon: ImageVector =
-                        if (currentScreen.value == BookAppScreen.Favorite) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks
+                        if (currentScreen == Routes.Favorite) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks
                     Icon(bookmarksIcon, contentDescription = null)
                 })
         }
