@@ -75,16 +75,14 @@ fun BookApp() {
     val uiState by bookViewModel.uiState.collectAsState()
 
     val enterTransitionAnimation = slideInVertically(
-        animationSpec = tween(500),
+        animationSpec = tween(400),
         initialOffsetY = { it }
     )
 
     val exitTransitionAnimation = slideOutVertically(
-        animationSpec = tween(500),
+        animationSpec = tween(400),
         targetOffsetY = { it }
     )
-
-
 
 
     //Create NavController
@@ -120,14 +118,8 @@ fun BookApp() {
                 }
 
                 composable(route = Routes.SEARCH,
-                    enterTransition = { slideInVertically(
-                        animationSpec = tween(400),
-                        initialOffsetY = { it }
-                    ) },
-                    exitTransition = { slideOutVertically(
-                        animationSpec = tween(400),
-                        targetOffsetY = { it }
-                    ) }
+                    enterTransition = { enterTransitionAnimation },
+                    exitTransition = { exitTransitionAnimation }
                 ) {
                     SearchScreen(
                         bookViewModel = bookViewModel,

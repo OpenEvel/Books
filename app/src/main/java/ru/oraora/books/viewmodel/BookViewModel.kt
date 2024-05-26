@@ -21,7 +21,7 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(BookUiState())
     val uiState: StateFlow<BookUiState> = _uiState
 
-    private val _searchHistory = mutableStateListOf<String>()
+    private val _searchHistory = mutableStateListOf<String>("lol", "kek", "cheburek")
     val searchHistory: List<String> get() = Collections.unmodifiableList(_searchHistory)
 
     fun addHistory(query: String) {
@@ -33,6 +33,12 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     fun removeHistory(index: Int) {
         viewModelScope.launch {
             _searchHistory.removeAt(index)
+        }
+    }
+
+    fun clearHistory() {
+        viewModelScope.launch {
+            _searchHistory.clear()
         }
     }
 

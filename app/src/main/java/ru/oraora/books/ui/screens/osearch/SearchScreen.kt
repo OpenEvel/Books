@@ -92,6 +92,7 @@ fun SearchScreen(
                 searchHistory = bookViewModel.searchHistory,
                 addHistory = { bookViewModel.addHistory(it) },
                 removeHistory = { bookViewModel.removeHistory(it) },
+                clearHistory = { bookViewModel.clearHistory() },
                 scrollState = scrollState,
             )
         }

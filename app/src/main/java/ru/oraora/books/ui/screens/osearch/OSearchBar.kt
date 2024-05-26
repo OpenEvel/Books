@@ -13,6 +13,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -35,6 +37,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -114,6 +117,7 @@ fun TopSearchBar(
     searchHistory: List<String>,
     addHistory: (String) -> Unit,
     removeHistory: (Int) -> Unit,
+    clearHistory: () -> Unit,
     animationProgress: State<Float> = OSearchBarDefaults.animationProgress(active = active),
 ) {
 
@@ -153,6 +157,7 @@ fun TopSearchBar(
                     searchHistory = searchHistory,
                     addHistory = addHistory,
                     removeHistory = removeHistory,
+                    clearHistory = clearHistory,
                     animationProgress = animationProgress,
                 )
             }
@@ -211,6 +216,7 @@ fun OSearchBar(
     searchHistory: List<String>,
     addHistory: (String) -> Unit,
     removeHistory: (Int) -> Unit,
+    clearHistory: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
@@ -349,29 +355,55 @@ fun OSearchBar(
                         .padding(bottom = 16.dp)
                         .graphicsLayer { alpha = animationProgress.value }) {
                     HorizontalDivider(color = colors.dividerColor)
+                    if (active && searchHistory.size > 1) {
+                        Row {
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                text = "Очистить все",
+                                modifier = Modifier
+                                    .padding(start = 4.dp, top = 8.dp, end = 16.dp, bottom = 8.dp)
+                                    .clickable {
+                                        clearHistory()
+                                    }
+                            )
+                        }
+                    }
                     LazyColumn {
-                        items(searchHistory) {
-                            if (!(it == query && !active)) {
+                        itemsIndexed(searchHistory) { index, archive ->
+                            if (!(archive == query && !active)) {
                                 Row(verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
                                         .clickable {
                                             onActiveChange(false)
                                             keyboardController?.hide()
-                                            onQueryChange(it)
+                                            onQueryChange(archive)
                                             onSearch()
                                         }
                                         .fillMaxWidth()
-                                        .padding(vertical = 12.dp)
+                                        .padding(vertical = 6.dp)
                                 ) {
                                     Icon(
                                         Icons.Outlined.History,
                                         contentDescription = null,
-                                        modifier = Modifier.padding(start = 16.dp, end = 8.dp)
+                                        modifier = Modifier.padding(start = 16.dp, end = 12.dp)
                                     )
+
                                     Text(
-                                        text = it,
+                                        text = archive,
                                         modifier = Modifier.weight(1f)
                                     )
+
+
+                                    IconButton(
+                                        modifier = Modifier
+                                            .padding(start = 8.dp, end = 4.dp),
+                                        onClick = { removeHistory(index) }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = null,
+                                        )
+                                    }
                                 }
 
                             }
@@ -500,16 +532,10 @@ object OSearchBarDefaults {
     val finishShape = RectangleShape
 
     val AnimationEnterFloatSpec: FiniteAnimationSpec<Float> = tween(
-        durationMillis = 600,
+        durationMillis = 400,
         delayMillis = 100,
         easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
     )
-
-//    val AnimationExitFloatSpec: FiniteAnimationSpec<Float> = tween(
-//        durationMillis = 350,
-//        delayMillis = 100,
-//        easing = CubicBezierEasing(0.0f, 1.0f, 0.0f, 1.0f),
-//    )
 
     val AnimationExitFloatSpec: FiniteAnimationSpec<Float> = tween(
         durationMillis = 350,
