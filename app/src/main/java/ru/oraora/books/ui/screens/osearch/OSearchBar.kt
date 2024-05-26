@@ -371,7 +371,7 @@ fun OSearchBar(
                         .padding(bottom = 16.dp)
                         .graphicsLayer { alpha = animationProgress.value }) {
                     HorizontalDivider(color = colors.dividerColor)
-                    if (searchHistory.size > 1) {
+                    if (searchHistory.size > 1 + searchHistory.count { it == lastQuery }) {
                         Row {
                             Spacer(modifier = Modifier.weight(1f))
                             Text(
