@@ -33,16 +33,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -53,16 +48,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
+import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.SearchFrame
 
 @Composable
 fun SearchScreen(
     bookViewModel: BookViewModel,
-    searchRequester: FocusRequester,
+    uiState: BookUiState,
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
-    searchHistory: MutableList<String> = rememberSaveable { mutableListOf<String>() }
 ) {
     Box(
         modifier = modifier
@@ -86,16 +81,17 @@ fun SearchScreen(
                             .wrapContentSize(Alignment.Center)
                     )
                 },
-                query = bookViewModel.query,
+                query = uiState.query,
                 onQueryChange = { bookViewModel.onQueryChange(it) },
                 onSearch = { bookViewModel.getBooks() },
-                active = bookViewModel.isSearchActive,
+                active = uiState.isSearchActive,
                 onActiveChange = { bookViewModel.onSearchActiveChange(it) },
-                searchRequester = searchRequester,
-                animationProgress = OSearchBarDefaults.animationProgress(active = bookViewModel.isSearchActive),
+                animationProgress = OSearchBarDefaults.animationProgress(active = uiState.isSearchActive),
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = { Icon(Icons.Default.Cancel, contentDescription = "Cancel icon") },
-                searchHistory = searchHistory,
+                searchHistory = bookViewModel.searchHistory,
+                addHistory = { bookViewModel.addHistory(it) },
+                removeHistory = { bookViewModel.removeHistory(it) },
                 scrollState = scrollState,
             )
         }
@@ -118,13 +114,12 @@ fun SearchScreen(
                     )
                 }
 
-                when (bookViewModel.searchFrame) {
+                when (uiState.searchFrame) {
                     SearchFrame.FIRST_ENTER -> FirstEnterFrame()
                     SearchFrame.LOADING -> LoadingFrame()
                     SearchFrame.ERROR -> ErrorFrame(
                         retryAction = { bookViewModel.getBooks() }
                     )
-
                     SearchFrame.SUCCESS -> BooksList(books = bookViewModel.books)
                 }
             }

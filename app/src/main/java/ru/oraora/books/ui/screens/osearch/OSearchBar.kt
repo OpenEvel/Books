@@ -1,14 +1,8 @@
 package ru.oraora.books.ui.screens.osearch
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.view.ViewTreeObserver
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.EaseInOutBack
-import androidx.compose.animation.core.EaseInOutCirc
-import androidx.compose.animation.core.EaseOutBounce
-import androidx.compose.animation.core.EaseOutElastic
 import androidx.compose.animation.core.EaseOutQuint
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
@@ -30,7 +24,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -42,7 +35,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -59,7 +51,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
@@ -67,14 +58,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
@@ -91,14 +80,11 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.platform.PlatformTextInputModifierNode
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -107,6 +93,7 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import ru.oraora.books.ui.LocalSearchRequester
 import kotlin.math.max
 import kotlin.math.min
 
@@ -121,11 +108,12 @@ fun TopSearchBar(
     onSearch: () -> Unit,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
-    searchRequester: FocusRequester,
     placeholder: (@Composable () -> Unit)? = null,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
-    searchHistory: MutableList<String>,
+    searchHistory: List<String>,
+    addHistory: (String) -> Unit,
+    removeHistory: (Int) -> Unit,
     animationProgress: State<Float> = OSearchBarDefaults.animationProgress(active = active),
 ) {
 
@@ -159,11 +147,12 @@ fun TopSearchBar(
                     onSearch = onSearch,
                     active = active,
                     onActiveChange = onActiveChange,
-                    searchRequester = searchRequester,
                     placeholder = placeholder,
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
                     searchHistory = searchHistory,
+                    addHistory = addHistory,
+                    removeHistory = removeHistory,
                     animationProgress = animationProgress,
                 )
             }
@@ -219,8 +208,9 @@ fun OSearchBar(
     onSearch: () -> Unit,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
-    searchRequester: FocusRequester,
-    searchHistory: MutableList<String>,
+    searchHistory: List<String>,
+    addHistory: (String) -> Unit,
+    removeHistory: (Int) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
@@ -310,14 +300,13 @@ fun OSearchBar(
                 query = query,
                 onQueryChange = onQueryChange,
                 onActiveChange = onActiveChange,
-                searchRequester = searchRequester,
                 onSearch = {
                     // Скрыть клавиатуру после поиска
                     onActiveChange(false)
                     keyboardController?.hide()
                     // Обновить историю поиска и выполнить поиск
                     if (query.isNotEmpty() && query !in searchHistory) {
-                        searchHistory.add(query)
+                        addHistory(query)
                     }
                     onSearch()
                 },
@@ -327,7 +316,7 @@ fun OSearchBar(
                         if (active) {
                             IconButton(
                                 modifier = Modifier
-                                    .rotate(animationProgress.value * 360)
+                                    .rotate(animationProgress.value * 450)
                                     .alpha(animationProgress.value),
                                 onClick = {
                                     if (query.isNotEmpty()) {
@@ -420,7 +409,6 @@ fun OSearchBarField(
     query: String,
     onQueryChange: (String) -> Unit,
     onActiveChange: (Boolean) -> Unit,
-    searchRequester: FocusRequester,
     onSearch: () -> Unit,
     enabled: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
@@ -432,6 +420,7 @@ fun OSearchBarField(
 ) {
     val isKeyboardVisible by keyboardAsState()
     val focusManager = LocalFocusManager.current
+    val searchRequester = LocalSearchRequester.current
 
     LaunchedEffect(isKeyboardVisible) {
         if (!isKeyboardVisible) {
@@ -542,7 +531,7 @@ object OSearchBarDefaults {
     fun colors(): OSearchBarColors {
         return OSearchBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
-            dividerColor = MaterialTheme.colorScheme.outline,
+            dividerColor = MaterialTheme.colorScheme.outline.copy(0.37f),
             textColor = MaterialTheme.colorScheme.onSurface,
             cursorColor = MaterialTheme.colorScheme.primary,
             selectionColors = LocalTextSelectionColors.current,
@@ -586,25 +575,24 @@ class OSearchBarColors(
         )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview
-@Composable
-fun MyNewSearchBarPreview() {
-    var query by rememberSaveable { mutableStateOf("") }
-    var active by rememberSaveable { mutableStateOf(false) }
-    val searchHistory = rememberSaveable { mutableListOf("A", "B", "C") }
-    val searchRequester = rememberSaveable { FocusRequester() }
-    Surface(modifier = Modifier.wrapContentSize(Alignment.Center)) {
-        OSearchBar(
-            query = query,
-            onQueryChange = { query = it },
-            onSearch = { },
-            active = active,
-            onActiveChange = { active = it },
-            searchRequester = rememberSaveable { FocusRequester() },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            searchHistory = searchHistory,
-        )
-    }
-
-}
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Preview
+//@Composable
+//fun MyNewSearchBarPreview() {
+//    var query by rememberSaveable { mutableStateOf("") }
+//    var active by rememberSaveable { mutableStateOf(false) }
+//    val searchHistory = rememberSaveable { mutableListOf("A", "B", "C") }
+//    val searchRequester = rememberSaveable { FocusRequester() }
+//    Surface(modifier = Modifier.wrapContentSize(Alignment.Center)) {
+//        OSearchBar(
+//            query = query,
+//            onQueryChange = { query = it },
+//            onSearch = { },
+//            active = active,
+//            onActiveChange = { active = it },
+//            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+//            searchHistory = searchHistory,
+//        )
+//    }
+//
+//}

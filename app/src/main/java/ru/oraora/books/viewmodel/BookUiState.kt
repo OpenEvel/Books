@@ -9,19 +9,24 @@ enum class SearchFrame {
     ERROR
 }
 
-enum class Routes {
-    Search,
-    Advice,
-    Favorite,
-    BookInfo,
+object Routes {
+    const val SEARCH = "route_search"
+    const val ADVICE = "route_advice"
+    const val FAVORITE = "route_favorite"
+    const val BOOK_INFO = "route_book_info"
 }
 
-//data class BookUiState(
-//    val query: String = "",
-//    val isSearchActive: Boolean = false,
-//    val searchState: SearchState = SearchState.FIRST_ENTER,
-//    val books: List<Book> = emptyList(),
-//    val selectedBook: Book? = null,
-//    val isShowingBookPage: Boolean = false,
-//    val currentScreen: Routes = Routes.Search
-//)
+//enum class Routes {
+//    Search,
+//    Advice,
+//    Favorite,
+//    BookInfo,
+//}
+
+data class BookUiState(
+    val query: String = "",
+    val isSearchActive: Boolean = false,
+    val searchFrame: SearchFrame = SearchFrame.FIRST_ENTER,
+    val selectedBook: Book? = null,
+    val isShowingBookPage: Boolean = false,
+)

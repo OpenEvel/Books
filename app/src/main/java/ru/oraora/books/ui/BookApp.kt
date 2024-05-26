@@ -1,5 +1,8 @@
 package ru.oraora.books.ui
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,10 +15,14 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Bookmarks
+import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemColors
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,13 +41,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,104 +66,49 @@ import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.Routes
 import kotlin.coroutines.CoroutineContext
 
-//@Composable
-//fun BookApp1() {
-//    val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
-//    val uiState by bookViewModel.uiState.collectAsState()
-//
-//
-//    //Create NavController
-//    val navController = rememberNavController()
-//
-//    Scaffold(
-//        bottomBar = {
-//            MyNavigationBar(
-//                navigateTo = { navController.navigate(it) },
-//                activateSearch = { bookViewModel.onSearchActiveChange(true) }
-//            )
-//        }
-//    ) { contentPadding ->
-//        NavHost(
-//            navController = navController,
-//            startDestination = BookAppScreen.Search.title
-//        ) {
-//            composable(route = BookAppScreen.Advice.title) {
-//                Box(
-//                    contentAlignment = Alignment.Center,
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .padding(contentPadding.copy(top = 0.dp))
-//                ) {
-//                    Text("Advice")
-//                }
-//            }
-//
-//            composable(route = BookAppScreen.Search.title) {
-//                SearchScreen(
-//                    bookViewModel = bookViewModel,
-//                    uiState = uiState,
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .padding(contentPadding.copy(top = 0.dp))
-//                )
-//            }
-//
-//            composable(route = BookAppScreen.Favorite.title) {
-//                Box(
-//                    contentAlignment = Alignment.Center,
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .padding(contentPadding.copy(top = 0.dp))
-//                ) {
-//                    Text("Favorite")
-//                }
-//            }
-//            composable(route = BookAppScreen.BookInfo.title) {
-//                Box(
-//                    contentAlignment = Alignment.Center,
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .padding(contentPadding.copy(top = 0.dp))
-//                ) {
-//                    Text("BookInfo")
-//                }
-//
-//            }
-//        }
-//
-////        SearchScreen(
-////            bookViewModel = bookViewModel,
-////            uiState = uiState,
-////            contentPadding = it,
-////        )
-//    }
-//}
-
 val LocalSearchRequester =
     compositionLocalOf<FocusRequester> { error("No FocusRequester provided") }
 
 @Composable
 fun BookApp() {
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
+    val uiState by bookViewModel.uiState.collectAsState()
+
+    val enterTransitionAnimation = slideInVertically(
+        animationSpec = tween(500),
+        initialOffsetY = { it }
+    )
+
+    val exitTransitionAnimation = slideOutVertically(
+        animationSpec = tween(500),
+        targetOffsetY = { it }
+    )
+
+
+
+
+    //Create NavController
+    val navController = rememberNavController()
 
     val searchRequester = remember { FocusRequester() }
     CompositionLocalProvider(LocalSearchRequester provides searchRequester) {
-
         Scaffold(
             bottomBar = {
                 BookNavigationBar(
-                    currentScreen = bookViewModel.currentScreen,
-                    changeCurrentScreen = { bookViewModel.changeCurrentScreen(it) },
-                    activateSearch = {
-                        searchRequester.requestFocus();
-                        bookViewModel.onSearchActiveChange(true);
-                    },
+                    navController = navController,
+                    activateSearch = { searchRequester.requestFocus() },
                 )
             }
         ) { contentPadding ->
 
-            when (bookViewModel.currentScreen) {
-                Routes.Advice ->
+            NavHost(
+                navController = navController,
+                startDestination = Routes.SEARCH
+            ) {
+                composable(route = Routes.ADVICE,
+                    enterTransition = { enterTransitionAnimation },
+                    exitTransition = { exitTransitionAnimation }
+                ) {
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
@@ -159,17 +117,31 @@ fun BookApp() {
                     ) {
                         Text("Advice")
                     }
+                }
 
-                Routes.Search ->
+                composable(route = Routes.SEARCH,
+                    enterTransition = { slideInVertically(
+                        animationSpec = tween(400),
+                        initialOffsetY = { it }
+                    ) },
+                    exitTransition = { slideOutVertically(
+                        animationSpec = tween(400),
+                        targetOffsetY = { it }
+                    ) }
+                ) {
                     SearchScreen(
                         bookViewModel = bookViewModel,
-                        searchRequester = searchRequester,
+                        uiState = uiState,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(contentPadding.copy(top = 0.dp))
                     )
+                }
 
-                Routes.Favorite ->
+                composable(route = Routes.FAVORITE,
+                    enterTransition = { enterTransitionAnimation },
+                    exitTransition = { exitTransitionAnimation }
+                ) {
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
@@ -178,8 +150,11 @@ fun BookApp() {
                     ) {
                         Text("Favorite")
                     }
-
-                Routes.BookInfo ->
+                }
+                composable(route = Routes.BOOK_INFO,
+                    enterTransition = { enterTransitionAnimation },
+                    exitTransition = { exitTransitionAnimation }
+                ) {
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
@@ -188,6 +163,8 @@ fun BookApp() {
                     ) {
                         Text("BookInfo")
                     }
+
+                }
             }
         }
     }
@@ -196,58 +173,74 @@ fun BookApp() {
 
 @Composable
 fun BookNavigationBar(
-    currentScreen: Routes,
-    changeCurrentScreen: (Routes) -> Unit,
+    navController: NavController,
     activateSearch: () -> Unit,
 ) {
-    Surface(
-        shadowElevation = 12.dp, // play with the elevation values
-    ) {
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    Column {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.37f))
         NavigationBar(
             tonalElevation = 0.dp
         ) {
 
-            // Advice Screen
             NavigationBarItem(
-                selected = currentScreen == Routes.Advice,
-                onClick = {
-                    changeCurrentScreen(Routes.Advice)
-                },
+                selected = currentDestination.isSelected(Routes.ADVICE),
+                onClick = { navController.myNavigate(Routes.ADVICE) },
                 icon = {
                     Icon(
                         painter = painterResource(
                             id = R.drawable.asterisk
-                        ), contentDescription = null
+                        ),
+                        contentDescription = null
                     )
-                })
+                },
+            )
 
             // Search Screen
             NavigationBarItem(
-                selected = currentScreen == Routes.Search,
+                selected = currentDestination.isSelected(Routes.SEARCH),
                 onClick = {
-                    if (currentScreen == Routes.Search) {
+                    if (currentDestination.isSelected(Routes.SEARCH)) {
                         activateSearch()
                     } else {
-                        changeCurrentScreen(Routes.Search)
+                        navController.myNavigate(Routes.SEARCH)
                     }
                 },
                 icon = {
                     Icon(
-                        Icons.Default.Search, contentDescription = null
+                        Icons.Default.Search,
+                        contentDescription = null
                     )
-                })
+                }
+            )
 
             // Favorite Screen
             NavigationBarItem(
-                selected = currentScreen == Routes.Favorite,
-                onClick = {
-                    changeCurrentScreen(Routes.Favorite)
-                },
+                selected = currentDestination.isSelected(Routes.FAVORITE),
+                onClick = { navController.myNavigate(Routes.FAVORITE) },
                 icon = {
                     val bookmarksIcon: ImageVector =
-                        if (currentScreen == Routes.Favorite) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks
+                        if (currentDestination.isSelected(Routes.FAVORITE)) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks
                     Icon(bookmarksIcon, contentDescription = null)
-                })
+                }
+            )
         }
     }
+}
+
+fun NavController.myNavigate(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+fun NavDestination?.isSelected(route: String): Boolean {
+    return this?.hierarchy?.any { it.route == route } == true
 }
