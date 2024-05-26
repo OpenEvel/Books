@@ -2,11 +2,12 @@ package ru.oraora.books.viewmodel
 
 import ru.oraora.books.data.models.Book
 
-enum class SearchFrame {
-    FIRST_ENTER,
-    LOADING,
-    SUCCESS,
-    ERROR
+sealed interface SearchFrame {
+
+    object FirstEnter : SearchFrame
+    object Loading : SearchFrame
+    data class Success(val books: List<Book>) : SearchFrame
+    object Error : SearchFrame
 }
 
 object Routes {
@@ -16,17 +17,13 @@ object Routes {
     const val BOOK_INFO = "route_book_info"
 }
 
-//enum class Routes {
-//    Search,
-//    Advice,
-//    Favorite,
-//    BookInfo,
-//}
 
 data class BookUiState(
     val query: String = "",
+    val lastQuery: String = "",
     val isSearchActive: Boolean = false,
-    val searchFrame: SearchFrame = SearchFrame.FIRST_ENTER,
+    val searchFrame: SearchFrame = SearchFrame.FirstEnter,
     val selectedBook: Book? = null,
     val isShowingBookPage: Boolean = false,
+    val searchColumnsCount: Int = 2,
 )

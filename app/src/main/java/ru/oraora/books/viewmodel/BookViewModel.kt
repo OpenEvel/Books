@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import ru.oraora.books.BookApplication
 import ru.oraora.books.data.models.Book
 import ru.oraora.books.data.repository.BookRepository
@@ -26,7 +27,7 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
 
     fun addHistory(query: String) {
         viewModelScope.launch {
-            if (query !in _searchHistory) {
+            if (query.trim().isNotEmpty() && query !in _searchHistory) {
                 _searchHistory.add(query)
             }
         }
@@ -46,31 +47,36 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         }
     }
 
-    private val _books = mutableStateListOf<Book>()
-    val books: List<Book> get() = Collections.unmodifiableList(_books)
-
     fun getBooks() {
-        // Обновляем состояние - начинаем загрузку книг
-
-        // Начинаем загрузку книг
         viewModelScope.launch {
             // Ставим состояние что мы загружаем информацию
             _uiState.update {
-                it.copy(searchFrame = SearchFrame.LOADING)
+                it.copy(
+                    searchFrame = SearchFrame.Loading,
+                )
+            }
+
+            // Загружаем данные с сервера
+            // Если в процессе загрузки возникает ошибка то показываем экран ошибки
+            _uiState.update {
+                it.copy(
+                    searchFrame = try {
+                        SearchFrame.Success(bookRepository.getBooks(it.query))
+                    } catch (e: IOException) {
+                        SearchFrame.Error
+                    } catch (e: HttpException) {
+                        SearchFrame.Error
+                    }
+                )
             }
 
             _uiState.update {
-                var queryState: SearchFrame = SearchFrame.SUCCESS
-                try {
-                    // Очищаем список книг
-                    _books.clear()
-                    _books.addAll(bookRepository.getBooks(it.query))
-                } catch (e: IOException) {
-                    queryState = SearchFrame.ERROR
-                }
-
-                it.copy(searchFrame = queryState)
+                it.copy(
+                    lastQuery = it.query
+                )
             }
+
+
         }
     }
 

@@ -15,15 +15,18 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
@@ -39,13 +42,19 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
 import ru.oraora.books.viewmodel.BookUiState
@@ -57,7 +66,7 @@ fun SearchScreen(
     bookViewModel: BookViewModel,
     uiState: BookUiState,
     modifier: Modifier = Modifier,
-    scrollState: LazyListState = rememberLazyListState(),
+    scrollState: LazyGridState = rememberLazyGridState(),
 ) {
     Box(
         modifier = modifier
@@ -82,8 +91,10 @@ fun SearchScreen(
                     )
                 },
                 query = uiState.query,
+                lastQuery = uiState.lastQuery,
                 onQueryChange = { bookViewModel.onQueryChange(it) },
                 onSearch = { bookViewModel.getBooks() },
+                searchFrame = uiState.searchFrame,
                 active = uiState.isSearchActive,
                 onActiveChange = { bookViewModel.onSearchActiveChange(it) },
                 animationProgress = OSearchBarDefaults.animationProgress(active = uiState.isSearchActive),
@@ -100,28 +111,40 @@ fun SearchScreen(
         Box(
             modifier = Modifier.fillMaxWidth()
         ) {
-            LazyColumn(
+            val topHeight =
+                OSearchBarDefaults.topHeight + WindowInsets
+                    .statusBars.asPaddingValues().calculateTopPadding()
+
+            val cellWidth = LocalConfiguration.current.screenWidthDp.dp / uiState.searchColumnsCount
+            val cellHeight = 1.5 * cellWidth
+
+            LazyVerticalGrid(
                 state = scrollState,
-                modifier = Modifier
-                    .fillMaxWidth()
+                columns = GridCells.Fixed(uiState.searchColumnsCount),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.fillMaxWidth()
+
             ) {
 
-                item {
+                items(2) {
                     Spacer(
-                        modifier = Modifier.height(
-                            OSearchBarDefaults.topHeight + WindowInsets
-                                .statusBars.asPaddingValues().calculateTopPadding()
-                        )
+                        modifier = Modifier.height(topHeight)
                     )
                 }
 
                 when (uiState.searchFrame) {
-                    SearchFrame.FIRST_ENTER -> FirstEnterFrame()
-                    SearchFrame.LOADING -> LoadingFrame()
-                    SearchFrame.ERROR -> ErrorFrame(
+                    is SearchFrame.FirstEnter -> FirstEnterFrame()
+                    is SearchFrame.Loading -> LoadingFrame()
+                    is SearchFrame.Error -> ErrorFrame(
                         retryAction = { bookViewModel.getBooks() }
                     )
-                    SearchFrame.SUCCESS -> BooksList(books = bookViewModel.books)
+
+                    is SearchFrame.Success -> BooksList(
+                        books = uiState.searchFrame.books,
+                        cellWidth = cellWidth,
+                        cellHeight = cellHeight,
+                    )
                 }
             }
         }
@@ -146,7 +169,7 @@ fun PaddingValues.copy(
 }
 
 
-fun LazyListScope.FirstEnterFrame() {
+fun LazyGridScope.FirstEnterFrame() {
     item {
         Box(
             modifier = Modifier
@@ -157,14 +180,14 @@ fun LazyListScope.FirstEnterFrame() {
                 Icons.Outlined.Book,
                 contentDescription = null,
                 modifier = Modifier.size(200.dp),
-                 tint = MaterialTheme.colorScheme.inversePrimary,
+                tint = MaterialTheme.colorScheme.inversePrimary,
             )
         }
     }
 }
 
 
-fun LazyListScope.LoadingFrame() {
+fun LazyGridScope.LoadingFrame() {
     item {
         Box(
             modifier = Modifier
@@ -182,7 +205,7 @@ fun LazyListScope.LoadingFrame() {
 }
 
 
-fun LazyListScope.ErrorFrame(
+fun LazyGridScope.ErrorFrame(
     retryAction: () -> Unit,
 ) {
     item {
@@ -205,27 +228,54 @@ fun LazyListScope.ErrorFrame(
 }
 
 
-fun LazyListScope.BooksList(
+fun LazyGridScope.BooksList(
     books: List<Book>,
+    cellWidth: Dp,
+    cellHeight: Dp,
 ) {
-    items(items = books) { book ->
-        Text(
-            text = book.title ?: "[ДАННЫЕ УДАЛЕНЫ]",
-            style = MaterialTheme.typography.bodyLarge,
-            color = LocalTextStyle.current.color.takeOrElse {
-                MaterialTheme.colorScheme.onSurface
-            },
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth()
-                .border(
-                    width = 2.dp,
-                    color = MaterialTheme.colorScheme.primary, // Цвет рамки, замените на нужный
-                    shape = RoundedCornerShape(8.dp) // Форма рамки, здесь используется закругленная форма
-                )
-                .padding(16.dp)
+    items(books) { book ->
+        BookCard(
+            book = book,
+            cellWidth = cellWidth,
+            cellHeight = cellHeight,
         )
+
+//        Text(
+//            text = book.title ?: "[ДАННЫЕ УДАЛЕНЫ]",
+//            style = MaterialTheme.typography.bodyLarge,
+//            color = LocalTextStyle.current.color.takeOrElse {
+//                MaterialTheme.colorScheme.onSurface
+//            },
+//            modifier = Modifier
+//                .padding(8.dp)
+//                .fillMaxWidth()
+//                .border(
+//                    width = 2.dp,
+//                    color = MaterialTheme.colorScheme.primary, // Цвет рамки, замените на нужный
+//                    shape = RoundedCornerShape(8.dp) // Форма рамки, здесь используется закругленная форма
+//                )
+//                .padding(16.dp)
+//        )
     }
 }
 
-
+@Composable
+fun BookCard(
+    book: Book,
+    cellWidth: Dp,
+    cellHeight: Dp,
+) {
+    AsyncImage(
+        modifier = Modifier
+            .width(cellWidth)
+            .height(cellHeight),
+        model = ImageRequest.Builder(context = LocalContext.current)
+            .data(book.imageLink)
+            .crossfade(true)
+            .build(),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        error = painterResource(id = R.drawable.ic_broken_image),
+        placeholder = painterResource(id = R.drawable.loading_img)
+    )
+}

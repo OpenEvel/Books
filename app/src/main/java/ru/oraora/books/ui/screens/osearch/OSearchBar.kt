@@ -1,6 +1,7 @@
 package ru.oraora.books.ui.screens.osearch
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.ViewTreeObserver
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.EaseOutQuint
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.GenericShape
@@ -96,7 +98,9 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kotlinx.coroutines.delay
 import ru.oraora.books.ui.LocalSearchRequester
+import ru.oraora.books.viewmodel.SearchFrame
 import kotlin.math.max
 import kotlin.math.min
 
@@ -105,10 +109,12 @@ import kotlin.math.min
 fun TopSearchBar(
     modifier: Modifier = Modifier,
     firstLine: (@Composable () -> Unit),
-    scrollState: LazyListState,
+    scrollState: LazyGridState,
     query: String,
+    lastQuery: String,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
+    searchFrame: SearchFrame,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
     placeholder: (@Composable () -> Unit)? = null,
@@ -147,8 +153,10 @@ fun TopSearchBar(
             ) {
                 OSearchBar(
                     query = query,
+                    lastQuery = lastQuery,
                     onQueryChange = onQueryChange,
                     onSearch = onSearch,
+                    searchFrame = searchFrame,
                     active = active,
                     onActiveChange = onActiveChange,
                     placeholder = placeholder,
@@ -209,8 +217,10 @@ fun TopSearchBar(
 @Composable
 fun OSearchBar(
     query: String,
+    lastQuery: String,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
+    searchFrame: SearchFrame,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
     searchHistory: List<String>,
@@ -228,6 +238,12 @@ fun OSearchBar(
     windowInsets: WindowInsets = WindowInsets.statusBars,
     animationProgress: State<Float> = OSearchBarDefaults.animationProgress(active = active),
 ) {
+
+    LaunchedEffect(animationProgress.value) {
+        if (animationProgress.value == 0f) {
+           addHistory(query)
+        }
+    }
     val keyboardController = LocalSoftwareKeyboardController.current
     val density = LocalDensity.current
 
@@ -304,6 +320,7 @@ fun OSearchBar(
         Column {
             OSearchBarField(
                 query = query,
+                lastQuery = lastQuery,
                 onQueryChange = onQueryChange,
                 onActiveChange = onActiveChange,
                 onSearch = {
@@ -311,11 +328,10 @@ fun OSearchBar(
                     onActiveChange(false)
                     keyboardController?.hide()
                     // Обновить историю поиска и выполнить поиск
-                    if (query.isNotEmpty() && query !in searchHistory) {
-                        addHistory(query)
-                    }
                     onSearch()
+//                    addHistory(query)
                 },
+                searchFrame = searchFrame,
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon?.let { trailing ->
                     {
@@ -355,7 +371,7 @@ fun OSearchBar(
                         .padding(bottom = 16.dp)
                         .graphicsLayer { alpha = animationProgress.value }) {
                     HorizontalDivider(color = colors.dividerColor)
-                    if (active && searchHistory.size > 1) {
+                    if (searchHistory.size > 1) {
                         Row {
                             Spacer(modifier = Modifier.weight(1f))
                             Text(
@@ -370,7 +386,7 @@ fun OSearchBar(
                     }
                     LazyColumn {
                         itemsIndexed(searchHistory) { index, archive ->
-                            if (!(archive == query && !active)) {
+                            if (lastQuery != archive) {
                                 Row(verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
                                         .clickable {
@@ -405,8 +421,8 @@ fun OSearchBar(
                                         )
                                     }
                                 }
-
                             }
+
                         }
                     }
                 }
@@ -439,9 +455,11 @@ fun keyboardAsState(): State<Boolean> {
 @Composable
 fun OSearchBarField(
     query: String,
+    lastQuery: String,
     onQueryChange: (String) -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onSearch: () -> Unit,
+    searchFrame: SearchFrame,
     enabled: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
@@ -458,6 +476,9 @@ fun OSearchBarField(
         if (!isKeyboardVisible) {
             focusManager.clearFocus()
             onActiveChange(false)
+            if (searchFrame !is SearchFrame.Loading && query != lastQuery) {
+                onQueryChange(lastQuery)
+            }
         }
     }
 
@@ -485,7 +506,7 @@ fun OSearchBarField(
             imeAction = ImeAction.Search
         ),
         keyboardActions = KeyboardActions(
-            onSearch = { onSearch() },
+            onSearch = { if (query.trim().isNotEmpty()) onSearch() },
         ),
         interactionSource = interactionSource,
         decorationBox = @Composable { innerTextField ->
@@ -600,25 +621,3 @@ class OSearchBarColors(
             disabledPlaceholderColor = placeholderColor.copy(alpha = 0.38f),
         )
 }
-
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Preview
-//@Composable
-//fun MyNewSearchBarPreview() {
-//    var query by rememberSaveable { mutableStateOf("") }
-//    var active by rememberSaveable { mutableStateOf(false) }
-//    val searchHistory = rememberSaveable { mutableListOf("A", "B", "C") }
-//    val searchRequester = rememberSaveable { FocusRequester() }
-//    Surface(modifier = Modifier.wrapContentSize(Alignment.Center)) {
-//        OSearchBar(
-//            query = query,
-//            onQueryChange = { query = it },
-//            onSearch = { },
-//            active = active,
-//            onActiveChange = { active = it },
-//            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-//            searchHistory = searchHistory,
-//        )
-//    }
-//
-//}
