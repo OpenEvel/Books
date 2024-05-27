@@ -1,13 +1,15 @@
 package ru.oraora.books.ui.screens.osearch
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.view.ViewTreeObserver
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.EaseOutQuint
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -21,16 +23,14 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -98,9 +98,7 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import kotlinx.coroutines.delay
 import ru.oraora.books.ui.LocalSearchRequester
-import ru.oraora.books.viewmodel.SearchFrame
 import kotlin.math.max
 import kotlin.math.min
 
@@ -114,7 +112,6 @@ fun TopSearchBar(
     lastQuery: String,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
-    searchFrame: SearchFrame,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
     placeholder: (@Composable () -> Unit)? = null,
@@ -122,7 +119,9 @@ fun TopSearchBar(
     trailingIcon: (@Composable () -> Unit)? = null,
     searchHistory: List<String>,
     addHistory: (String) -> Unit,
-    removeHistory: (Int) -> Unit,
+    deletedHistory: List<String>,
+    removeHistory: (String) -> Unit,
+    realRemoveHistory: () -> Unit,
     clearHistory: () -> Unit,
     animationProgress: State<Float> = OSearchBarDefaults.animationProgress(active = active),
 ) {
@@ -156,7 +155,6 @@ fun TopSearchBar(
                     lastQuery = lastQuery,
                     onQueryChange = onQueryChange,
                     onSearch = onSearch,
-                    searchFrame = searchFrame,
                     active = active,
                     onActiveChange = onActiveChange,
                     placeholder = placeholder,
@@ -164,7 +162,9 @@ fun TopSearchBar(
                     trailingIcon = trailingIcon,
                     searchHistory = searchHistory,
                     addHistory = addHistory,
+                    deletedHistory = deletedHistory,
                     removeHistory = removeHistory,
+                    realRemoveHistory = realRemoveHistory,
                     clearHistory = clearHistory,
                     animationProgress = animationProgress,
                 )
@@ -220,12 +220,13 @@ fun OSearchBar(
     lastQuery: String,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
-    searchFrame: SearchFrame,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
     searchHistory: List<String>,
     addHistory: (String) -> Unit,
-    removeHistory: (Int) -> Unit,
+    deletedHistory: List<String>,
+    removeHistory: (String) -> Unit,
+    realRemoveHistory: () -> Unit,
     clearHistory: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -241,11 +242,22 @@ fun OSearchBar(
 
     LaunchedEffect(animationProgress.value) {
         if (animationProgress.value == 0f) {
-           addHistory(query)
+
+            if (query != lastQuery) {
+                onQueryChange(lastQuery)
+            }
+
+            if (query.trim().isNotEmpty() && query !in searchHistory) {
+                addHistory(query)
+            }
+            if (deletedHistory.isNotEmpty()) {
+                realRemoveHistory()
+            }
         }
     }
     val keyboardController = LocalSoftwareKeyboardController.current
     val density = LocalDensity.current
+
 
     val useFullScreenShape by remember {
         derivedStateOf(structuralEqualityPolicy()) { animationProgress.value == 1f }
@@ -320,7 +332,6 @@ fun OSearchBar(
         Column {
             OSearchBarField(
                 query = query,
-                lastQuery = lastQuery,
                 onQueryChange = onQueryChange,
                 onActiveChange = onActiveChange,
                 onSearch = {
@@ -331,7 +342,6 @@ fun OSearchBar(
                     onSearch()
 //                    addHistory(query)
                 },
-                searchFrame = searchFrame,
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon?.let { trailing ->
                     {
@@ -360,74 +370,109 @@ fun OSearchBar(
                 modifier = Modifier.padding(top = topPadding.value * animationProgress.value)
             )
 
-            val showResults by remember {
+            val showHistory by remember {
                 derivedStateOf(structuralEqualityPolicy()) { animationProgress.value > 0 }
             }
 
-            if (showResults) {
+            var imeBottomPadding =
+                WindowInsets.ime.asPaddingValues().calculateBottomPadding() - 80.dp + 24.dp
+            if (imeBottomPadding < 0.dp) {
+                imeBottomPadding = 0.dp
+            }
+            if (showHistory) {
                 Column(
                     Modifier
-                        .imePadding()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = imeBottomPadding)
                         .graphicsLayer { alpha = animationProgress.value }) {
                     HorizontalDivider(color = colors.dividerColor)
-                    if (searchHistory.size > 1 + searchHistory.count { it == lastQuery }) {
+                    AnimatedVisibility(
+                        visible = searchHistory.size > deletedHistory.size,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
+
+                    ) {
                         Row {
+                            Text(
+                                text = "ВЫ НЕДАВНО ИСКАЛИ",
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+                            )
                             Spacer(modifier = Modifier.weight(1f))
                             Text(
-                                text = "Очистить все",
+                                text = "Очистить",
+                                color = Color.Red,
                                 modifier = Modifier
                                     .padding(start = 4.dp, top = 8.dp, end = 16.dp, bottom = 8.dp)
                                     .clickable {
                                         clearHistory()
                                     }
+
                             )
                         }
                     }
                     LazyColumn {
-                        itemsIndexed(searchHistory) { index, archive ->
-                            if (lastQuery != archive) {
-                                Row(verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .clickable {
-                                            onActiveChange(false)
-                                            keyboardController?.hide()
-                                            onQueryChange(archive)
-                                            onSearch()
-                                        }
-                                        .fillMaxWidth()
-                                        .padding(vertical = 6.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Outlined.History,
-                                        contentDescription = null,
-                                        modifier = Modifier.padding(start = 16.dp, end = 12.dp)
-                                    )
-
-                                    Text(
-                                        text = archive,
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-
-                                    IconButton(
-                                        modifier = Modifier
-                                            .padding(start = 8.dp, end = 4.dp),
-                                        onClick = { removeHistory(index) }
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = null,
-                                        )
-                                    }
-                                }
+                        items(searchHistory) {
+                            AnimatedVisibility(
+                                visible = it !in deletedHistory,
+                                enter = expandVertically(),
+                                exit = shrinkVertically()
+                            ) {
+                                HistoryItem(
+                                    history = it,
+                                    onItemClick = {
+                                        onActiveChange(false)
+                                        keyboardController?.hide()
+                                        onQueryChange(it)
+                                        onSearch()
+                                    },
+                                    removeHistory = removeHistory,
+                                )
                             }
-
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+@Stable
+fun HistoryItem(
+    history: String,
+    onItemClick: () -> Unit,
+    removeHistory: (String) -> Unit,
+
+    ) {
+    Row(verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clickable { onItemClick() }
+            .fillMaxWidth()
+            .padding(vertical = 14.dp)
+    ) {
+        Icon(
+            Icons.Outlined.History,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            modifier = Modifier.padding(start = 16.dp, end = 12.dp)
+        )
+
+        Text(
+            text = history,
+            modifier = Modifier.weight(1f)
+        )
+
+
+        Icon(
+            Icons.Default.Close,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            modifier = Modifier
+                .padding(start = 8.dp, end = 16.dp)
+                .clickable { removeHistory(history) },
+        )
+
     }
 }
 
@@ -455,11 +500,9 @@ fun keyboardAsState(): State<Boolean> {
 @Composable
 fun OSearchBarField(
     query: String,
-    lastQuery: String,
     onQueryChange: (String) -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onSearch: () -> Unit,
-    searchFrame: SearchFrame,
     enabled: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
@@ -470,18 +513,13 @@ fun OSearchBarField(
 ) {
     val isKeyboardVisible by keyboardAsState()
     val focusManager = LocalFocusManager.current
-    val searchRequester = LocalSearchRequester.current
 
     LaunchedEffect(isKeyboardVisible) {
         if (!isKeyboardVisible) {
             focusManager.clearFocus()
             onActiveChange(false)
-            if (searchFrame !is SearchFrame.Loading && query != lastQuery) {
-                onQueryChange(lastQuery)
-            }
         }
     }
-
 
     val textColor = LocalTextStyle.current.color.takeOrElse {
         colors.textColor
@@ -492,7 +530,7 @@ fun OSearchBarField(
         onValueChange = onQueryChange,
         modifier = modifier
             .fillMaxWidth()
-            .focusRequester(searchRequester)
+            .focusRequester(LocalSearchRequester.current)
             .onFocusChanged {
                 if (!it.isFocused) {
                     focusManager.clearFocus()

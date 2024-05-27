@@ -25,34 +25,49 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     private val _searchHistory = mutableStateListOf<String>("A", "B", "C")
     val searchHistory: List<String> get() = Collections.unmodifiableList(_searchHistory)
 
+    private val _deletedSearchHistory = mutableStateListOf<String>()
+    val deletedSearchHistory: List<String>
+        get() = Collections.unmodifiableList(
+            _deletedSearchHistory
+        )
+
     fun addHistory(query: String) {
         viewModelScope.launch {
             if (query.trim().isNotEmpty() && query !in _searchHistory) {
-                _searchHistory.add(query)
+                _searchHistory.add(0, query)
             }
         }
     }
 
-    fun removeHistory(index: Int) {
+    fun removeHistory(history: String) {
         viewModelScope.launch {
-            if (index >= 0 && index < _searchHistory.size) {
-                _searchHistory.removeAt(index)
-            }
+            _deletedSearchHistory.add(history)
         }
     }
+
+    fun realRemoveHistory() {
+        for (deletedQuery in _deletedSearchHistory) {
+            _searchHistory.remove(deletedQuery)
+        }
+        _deletedSearchHistory.clear()
+    }
+
 
     fun clearHistory() {
         viewModelScope.launch {
             _searchHistory.clear()
+            _deletedSearchHistory.clear()
         }
     }
 
-    fun getBooks() {
+    fun searchBooks() {
         viewModelScope.launch {
-            // Ставим состояние что мы загружаем информацию
+            // Ставим состояние, что мы загружаем информацию
+            // а также сохраняем последний запрос
             _uiState.update {
                 it.copy(
                     searchFrame = SearchFrame.Loading,
+                    lastQuery = it.query
                 )
             }
 
@@ -69,14 +84,6 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
                     }
                 )
             }
-
-            _uiState.update {
-                it.copy(
-                    lastQuery = it.query
-                )
-            }
-
-
         }
     }
 

@@ -2,7 +2,6 @@ package ru.oraora.books.ui.screens.osearch
 
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -27,7 +25,6 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Search
@@ -41,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -92,18 +90,19 @@ fun SearchScreen(
                 },
                 query = uiState.query,
                 lastQuery = uiState.lastQuery,
-                onQueryChange = { bookViewModel.onQueryChange(it) },
-                onSearch = { bookViewModel.getBooks() },
-                searchFrame = uiState.searchFrame,
+                onQueryChange = bookViewModel::onQueryChange,
+                onSearch = bookViewModel::searchBooks,
                 active = uiState.isSearchActive,
-                onActiveChange = { bookViewModel.onSearchActiveChange(it) },
+                onActiveChange = bookViewModel::onSearchActiveChange,
                 animationProgress = OSearchBarDefaults.animationProgress(active = uiState.isSearchActive),
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = { Icon(Icons.Default.Cancel, contentDescription = "Cancel icon") },
                 searchHistory = bookViewModel.searchHistory,
-                addHistory = { bookViewModel.addHistory(it) },
+                addHistory = bookViewModel::addHistory,
+                deletedHistory = bookViewModel.deletedSearchHistory,
                 removeHistory = { bookViewModel.removeHistory(it) },
-                clearHistory = { bookViewModel.clearHistory() },
+                realRemoveHistory =  bookViewModel::realRemoveHistory,
+                clearHistory = bookViewModel::clearHistory,
                 scrollState = scrollState,
             )
         }
@@ -127,7 +126,7 @@ fun SearchScreen(
 
             ) {
 
-                items(2) {
+                items(uiState.searchColumnsCount) {
                     Spacer(
                         modifier = Modifier.height(topHeight)
                     )
@@ -137,7 +136,7 @@ fun SearchScreen(
                     is SearchFrame.FirstEnter -> FirstEnterFrame()
                     is SearchFrame.Loading -> LoadingFrame()
                     is SearchFrame.Error -> ErrorFrame(
-                        retryAction = { bookViewModel.getBooks() }
+                        retryAction = { bookViewModel.searchBooks() }
                     )
 
                     is SearchFrame.Success -> BooksList(
