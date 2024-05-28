@@ -1,6 +1,7 @@
 package ru.oraora.books.ui.screens.osearch
 
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +55,8 @@ import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
 import ru.oraora.books.viewmodel.BookUiState
@@ -91,7 +95,9 @@ fun SearchScreen(
                 query = uiState.query,
                 lastQuery = uiState.lastQuery,
                 onQueryChange = bookViewModel::onQueryChange,
-                onSearch = bookViewModel::searchBooks,
+                onSearch = {
+                    bookViewModel.searchBooks()
+                },
                 active = uiState.isSearchActive,
                 onActiveChange = bookViewModel::onSearchActiveChange,
                 animationProgress = OSearchBarDefaults.animationProgress(active = uiState.isSearchActive),
@@ -100,49 +106,32 @@ fun SearchScreen(
                 searchHistory = bookViewModel.searchHistory,
                 addHistory = bookViewModel::addHistory,
                 deletedHistory = bookViewModel.deletedSearchHistory,
-                removeHistory = { bookViewModel.removeHistory(it) },
-                realRemoveHistory =  bookViewModel::realRemoveHistory,
+                removeHistory = bookViewModel::removeHistory,
+                realRemoveHistory = bookViewModel::realRemoveHistory,
                 clearHistory = bookViewModel::clearHistory,
                 scrollState = scrollState,
             )
         }
 
         Box(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxSize()
         ) {
-            val topHeight =
-                OSearchBarDefaults.topHeight + WindowInsets
-                    .statusBars.asPaddingValues().calculateTopPadding()
-
-            val cellWidth = LocalConfiguration.current.screenWidthDp.dp / uiState.searchColumnsCount
-            val cellHeight = 1.5 * cellWidth
-
-            LazyVerticalGrid(
-                state = scrollState,
-                columns = GridCells.Fixed(uiState.searchColumnsCount),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.fillMaxWidth()
-
-            ) {
-
-                items(uiState.searchColumnsCount) {
-                    Spacer(
-                        modifier = Modifier.height(topHeight)
-                    )
+            // Если у нас меняется экран поиска
+            LaunchedEffect(uiState.searchFrame) {
+                coroutineScope {
+                    // Выставляем скрол на начальную позицию
+                    launch { scrollState.scrollToItem(0, 0) }
                 }
-
-                when (uiState.searchFrame) {
-                    is SearchFrame.FirstEnter -> FirstEnterFrame()
-                    is SearchFrame.Loading -> LoadingFrame()
-                    is SearchFrame.Error -> ErrorFrame(
-                        retryAction = { bookViewModel.searchBooks() }
-                    )
-
-                    is SearchFrame.Success -> BooksList(
+            }
+            when (uiState.searchFrame) {
+                is SearchFrame.FirstEnter -> FirstEnterFrame()
+                is SearchFrame.Loading -> LoadingFrame()
+                is SearchFrame.Error -> ErrorFrame(retryAction = bookViewModel::searchBooks)
+                is SearchFrame.Success -> {
+                    BookGridFrame(
                         books = uiState.searchFrame.books,
-                        cellWidth = cellWidth,
-                        cellHeight = cellHeight,
+                        columnsCount = uiState.searchColumnsCount,
+                        scrollState = scrollState
                     )
                 }
             }
@@ -168,76 +157,103 @@ fun PaddingValues.copy(
 }
 
 
-fun LazyGridScope.FirstEnterFrame() {
-    item {
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Outlined.Book,
-                contentDescription = null,
-                modifier = Modifier.size(200.dp),
-                tint = MaterialTheme.colorScheme.inversePrimary,
-            )
-        }
+@Composable
+fun FirstEnterFrame() {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            Icons.Outlined.Book,
+            contentDescription = null,
+            modifier = Modifier.size(200.dp),
+            tint = MaterialTheme.colorScheme.inversePrimary,
+        )
     }
+
 }
 
 
-fun LazyGridScope.LoadingFrame() {
-    item {
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                modifier = Modifier.size(200.dp),
-                painter = painterResource(R.drawable.loading_img),
-                contentDescription = stringResource(R.string.loading)
-            )
-        }
-
+@Composable
+fun LoadingFrame() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            modifier = Modifier.size(200.dp),
+            painter = painterResource(R.drawable.loading_img),
+            contentDescription = stringResource(R.string.loading)
+        )
     }
 }
 
-
-fun LazyGridScope.ErrorFrame(
+@Composable
+fun ErrorFrame(
     retryAction: () -> Unit,
 ) {
-    item {
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_connection_error),
-                contentDescription = ""
-            )
-            Text(text = stringResource(R.string.loading_failed), modifier = Modifier.padding(16.dp))
-            Button(onClick = retryAction) {
-                Text(stringResource(R.string.retry))
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_connection_error),
+            contentDescription = ""
+        )
+        Text(text = stringResource(R.string.loading_failed), modifier = Modifier.padding(16.dp))
+        Button(onClick = retryAction) {
+            Text(stringResource(R.string.retry))
         }
     }
+
 }
 
 
-fun LazyGridScope.BooksList(
+@Composable
+fun BookGridFrame(
     books: List<Book>,
-    cellWidth: Dp,
-    cellHeight: Dp,
+    columnsCount: Int,
+    scrollState: LazyGridState = rememberLazyGridState(),
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
-    items(books) { book ->
-        BookCard(
-            book = book,
-            cellWidth = cellWidth,
-            cellHeight = cellHeight,
-        )
+    Box(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        val topHeight =
+            OSearchBarDefaults.topHeight + WindowInsets
+                .statusBars.asPaddingValues().calculateTopPadding()
+
+        val cellWidth = LocalConfiguration.current.screenWidthDp.dp / columnsCount
+        val cellHeight = 1.5 * cellWidth
+
+        LazyVerticalGrid(
+            state = scrollState,
+            columns = GridCells.Fixed(columnsCount),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.fillMaxWidth()
+
+        ) {
+
+            items(columnsCount) {
+                Spacer(
+                    modifier = Modifier.height(topHeight)
+                )
+            }
+
+            items(books) { book ->
+                BookCard(
+                    book = book,
+                    cellWidth = cellWidth,
+                    cellHeight = cellHeight,
+                )
+            }
+        }
     }
 }
 
