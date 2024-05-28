@@ -4,11 +4,16 @@ import android.annotation.SuppressLint
 import android.view.ViewTreeObserver
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.EaseInExpo
+import androidx.compose.animation.core.EaseInOutCirc
+import androidx.compose.animation.core.EaseInQuart
+import androidx.compose.animation.core.EaseInQuint
 import androidx.compose.animation.core.EaseOutQuint
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,6 +52,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldColors
@@ -89,7 +95,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -108,9 +116,9 @@ fun TopSearchBar(
     modifier: Modifier = Modifier,
     firstLine: (@Composable () -> Unit),
     scrollState: LazyGridState,
-    query: String,
-    lastQuery: String,
-    onQueryChange: (String) -> Unit,
+    query: TextFieldValue,
+    lastQuery: TextFieldValue,
+    onQueryChange: (TextFieldValue) -> Unit,
     onSearch: () -> Unit,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
@@ -216,9 +224,9 @@ fun TopSearchBar(
 @ExperimentalMaterial3Api
 @Composable
 fun OSearchBar(
-    query: String,
-    lastQuery: String,
-    onQueryChange: (String) -> Unit,
+    query: TextFieldValue,
+    lastQuery: TextFieldValue,
+    onQueryChange: (TextFieldValue) -> Unit,
     onSearch: () -> Unit,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
@@ -247,8 +255,8 @@ fun OSearchBar(
                 onQueryChange(lastQuery)
             }
 
-            if (query.trim().isNotEmpty() && query !in searchHistory) {
-                addHistory(query)
+            if (query.text.trim().isNotEmpty() && query.text !in searchHistory) {
+                addHistory(query.text)
             }
             if (deletedHistory.isNotEmpty()) {
                 realRemoveHistory()
@@ -263,6 +271,7 @@ fun OSearchBar(
         derivedStateOf(structuralEqualityPolicy()) { animationProgress.value == 1f }
     }
 
+
     val animatedShape = remember(useFullScreenShape) {
         // Если заполняем весь экран
         if (useFullScreenShape) {
@@ -274,7 +283,11 @@ fun OSearchBar(
                 // Если прогресс анимации = 0,
                 // то получаетя полоска с полностью круглыми краями
                 // По мере прогреса анимации скругление уменьшается
-                val radius = size.height * (1 - animationProgress.value) / 2
+//                val radius = size.height * (1 - animationProgress.value) / 2
+
+                val radius = with(density) {
+                    (OSearchBarDefaults.fieldHeight * (1 - animationProgress.value)).toPx()
+                }
                 // Добавляем скурглённый прямоугольник
                 addRoundRect(RoundRect(size.toRect(), CornerRadius(radius)))
             }
@@ -351,8 +364,8 @@ fun OSearchBar(
                                     .rotate(animationProgress.value * 450)
                                     .alpha(animationProgress.value),
                                 onClick = {
-                                    if (query.isNotEmpty()) {
-                                        onQueryChange("")
+                                    if (query.text.isNotEmpty()) {
+                                        onQueryChange(TextFieldValue(text = ""))
                                     } else {
                                         onActiveChange(false)
                                         keyboardController?.hide()
@@ -391,19 +404,23 @@ fun OSearchBar(
                         exit = shrinkVertically()
 
                     ) {
-                        Row {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 6.dp)
+                        ) {
                             Text(
                                 text = "ВЫ НЕДАВНО ИСКАЛИ",
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier
-                                    .padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+                                    .padding(start = 16.dp)
                             )
                             Spacer(modifier = Modifier.weight(1f))
                             Text(
                                 text = "Очистить",
                                 color = Color.Red,
                                 modifier = Modifier
-                                    .padding(start = 4.dp, top = 8.dp, end = 16.dp, bottom = 8.dp)
+                                    .padding(start = 4.dp, end = 16.dp)
                                     .clickable {
                                         clearHistory()
                                     }
@@ -416,14 +433,14 @@ fun OSearchBar(
                             AnimatedVisibility(
                                 visible = it !in deletedHistory,
                                 enter = expandVertically(),
-                                exit = shrinkVertically()
+                                exit = fadeOut()  + shrinkVertically()
                             ) {
                                 HistoryItem(
                                     history = it,
                                     onItemClick = {
                                         onActiveChange(false)
                                         keyboardController?.hide()
-                                        onQueryChange(it)
+                                        onQueryChange(TextFieldValue(text=it))
                                         onSearch()
                                     },
                                     removeHistory = removeHistory,
@@ -499,8 +516,8 @@ fun keyboardAsState(): State<Boolean> {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OSearchBarField(
-    query: String,
-    onQueryChange: (String) -> Unit,
+    query: TextFieldValue,
+    onQueryChange: (TextFieldValue) -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onSearch: () -> Unit,
     enabled: Boolean = true,
@@ -527,7 +544,7 @@ fun OSearchBarField(
 
     BasicTextField(
         value = query,
-        onValueChange = onQueryChange,
+        onValueChange = { onQueryChange(it) },
         modifier = modifier
             .fillMaxWidth()
             .focusRequester(LocalSearchRequester.current)
@@ -538,18 +555,18 @@ fun OSearchBarField(
                 onActiveChange(it.isFocused)
             },
         singleLine = true,
-        textStyle = LocalTextStyle.current.merge(TextStyle(color = textColor)),
+        textStyle = LocalTextStyle.current.merge(TextStyle(color = textColor, textDecoration = TextDecoration.None)),
         cursorBrush = SolidColor(colors.cursorColor),
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Search
         ),
         keyboardActions = KeyboardActions(
-            onSearch = { if (query.trim().isNotEmpty()) onSearch() },
+            onSearch = { if (query.text.trim().isNotEmpty()) onSearch() },
         ),
         interactionSource = interactionSource,
         decorationBox = @Composable { innerTextField ->
             TextFieldDefaults.DecorationBox(
-                value = query,
+                value = query.text,
                 innerTextField = innerTextField,
                 enabled = enabled,
                 singleLine = true,
@@ -576,6 +593,7 @@ fun OSearchBarField(
 }
 
 
+@Immutable
 object OSearchBarDefaults {
     val elevation: Dp = 6.dp
     val firstLineHeight: Dp = 56.dp
@@ -603,6 +621,7 @@ object OSearchBarDefaults {
     )
 
     @Composable
+    @Stable
     fun animationProgress(active: Boolean): State<Float> {
         return animateFloatAsState(
             targetValue = if (active) 1f else 0f,

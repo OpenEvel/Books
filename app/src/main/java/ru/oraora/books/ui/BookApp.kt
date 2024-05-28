@@ -94,7 +94,10 @@ fun BookApp() {
             bottomBar = {
                 BookNavigationBar(
                     navController = navController,
-                    activateSearch = { searchRequester.requestFocus() },
+                    activateSearch = {
+                        searchRequester.requestFocus()
+                        bookViewModel.selectAllQuery()
+                    },
                 )
             }
         ) { contentPadding ->

@@ -1,6 +1,8 @@
 package ru.oraora.books.viewmodel
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -76,7 +78,7 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
             _uiState.update {
                 it.copy(
                     searchFrame = try {
-                        SearchFrame.Success(bookRepository.getBooks(it.query))
+                        SearchFrame.Success(bookRepository.getBooks(it.lastQuery.text))
                     } catch (e: IOException) {
                         SearchFrame.Error
                     } catch (e: HttpException) {
@@ -95,11 +97,21 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         }
     }
 
-    fun onQueryChange(query: String) {
+    fun onQueryChange(newQuery: TextFieldValue) {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
-                    query = query
+                    query = TextFieldValue(newQuery.text, selection = newQuery.selection)
+                )
+            }
+        }
+    }
+
+    fun selectAllQuery() {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    query = it.query.copy(selection = TextRange(0, it.query.text.length))
                 )
             }
         }

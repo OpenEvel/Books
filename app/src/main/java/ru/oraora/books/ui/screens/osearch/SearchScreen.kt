@@ -238,23 +238,6 @@ fun LazyGridScope.BooksList(
             cellWidth = cellWidth,
             cellHeight = cellHeight,
         )
-
-//        Text(
-//            text = book.title ?: "[ДАННЫЕ УДАЛЕНЫ]",
-//            style = MaterialTheme.typography.bodyLarge,
-//            color = LocalTextStyle.current.color.takeOrElse {
-//                MaterialTheme.colorScheme.onSurface
-//            },
-//            modifier = Modifier
-//                .padding(8.dp)
-//                .fillMaxWidth()
-//                .border(
-//                    width = 2.dp,
-//                    color = MaterialTheme.colorScheme.primary, // Цвет рамки, замените на нужный
-//                    shape = RoundedCornerShape(8.dp) // Форма рамки, здесь используется закругленная форма
-//                )
-//                .padding(16.dp)
-//        )
     }
 }
 

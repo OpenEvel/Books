@@ -1,5 +1,6 @@
 package ru.oraora.books.viewmodel
 
+import androidx.compose.ui.text.input.TextFieldValue
 import ru.oraora.books.data.models.Book
 
 sealed interface SearchFrame {
@@ -19,8 +20,8 @@ object Routes {
 
 
 data class BookUiState(
-    val query: String = "",
-    val lastQuery: String = "",
+    val query: TextFieldValue = TextFieldValue(""),
+    val lastQuery: TextFieldValue = TextFieldValue(""),
     val isSearchActive: Boolean = false,
     val searchFrame: SearchFrame = SearchFrame.FirstEnter,
     val selectedBook: Book? = null,
