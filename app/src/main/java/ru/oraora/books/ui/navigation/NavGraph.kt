@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +20,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import ru.oraora.books.ui.screens.AdviceScreen
+import ru.oraora.books.ui.screens.BookInfoScreen
 import ru.oraora.books.ui.screens.FavoriteScreen
 import ru.oraora.books.ui.screens.SearchScreen
 import ru.oraora.books.ui.screens.copy
@@ -26,6 +28,7 @@ import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.Routes
 
+@Stable
 @Composable
 fun NavGraph(
     navController: NavHostController,
@@ -65,7 +68,8 @@ fun NavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Routes.SEARCH
+        startDestination = startDestination,
+        modifier = modifier,
     ) {
         composable(
             route = Routes.ADVICE,
@@ -88,6 +92,7 @@ fun NavGraph(
             SearchScreen(
                 bookViewModel = bookViewModel,
                 uiState = uiState,
+                navController = navController,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding.copy(top = 0.dp))
@@ -111,15 +116,12 @@ fun NavGraph(
             enterTransition = { enterHorizontal },
             exitTransition = { exitHorizontal }
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
+            BookInfoScreen(
+                book = uiState.selectedBook,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding.copy(top = 0.dp))
-            ) {
-                Text("BookInfo")
-            }
-
+            )
         }
     }
 

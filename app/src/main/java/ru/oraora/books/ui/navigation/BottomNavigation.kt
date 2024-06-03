@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import ru.oraora.books.R
 import ru.oraora.books.viewmodel.Routes
@@ -27,7 +28,18 @@ fun BottomNavigationBar(
 ) {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
+
+    val currentDestination: NavDestination?
+    val isRealBookInfo: Boolean
+
+    if (!navBackStackEntry?.destination.isSelected(Routes.BOOK_INFO)) {
+        currentDestination = navBackStackEntry?.destination
+        isRealBookInfo = false
+    } else {
+        currentDestination = navController.previousBackStackEntry?.destination
+        isRealBookInfo = true
+
+    }
 
     Column {
         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.37f))
@@ -52,7 +64,7 @@ fun BottomNavigationBar(
             NavigationBarItem(
                 selected = currentDestination.isSelected(Routes.SEARCH),
                 onClick = {
-                    if (currentDestination.isSelected(Routes.SEARCH)) {
+                    if (!isRealBookInfo && currentDestination.isSelected(Routes.SEARCH)) {
                         activateSearch()
                     } else {
                         navController.myNavigate(Routes.SEARCH)

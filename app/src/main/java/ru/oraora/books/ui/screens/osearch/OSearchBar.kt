@@ -1,4 +1,4 @@
-package ru.oraora.books.ui.screens
+package ru.oraora.books.ui.screens.osearch
 
 import android.annotation.SuppressLint
 import android.view.ViewTreeObserver
@@ -48,7 +48,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldColors

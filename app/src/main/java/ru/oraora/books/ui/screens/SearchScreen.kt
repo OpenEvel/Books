@@ -51,22 +51,29 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
+import ru.oraora.books.ui.navigation.myNavigate
+import ru.oraora.books.ui.screens.obook.BookGrid
+import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults
+import ru.oraora.books.ui.screens.osearch.TopSearchBar
 import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
+import ru.oraora.books.viewmodel.Routes
 import ru.oraora.books.viewmodel.SearchFrame
 
 @Composable
 fun SearchScreen(
     bookViewModel: BookViewModel,
     uiState: BookUiState,
-    modifier: Modifier = Modifier,
+    navController: NavHostController,
     scrollState: LazyGridState = rememberLazyGridState(),
+    modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
@@ -126,10 +133,16 @@ fun SearchScreen(
                 is SearchFrame.Loading -> LoadingFrame()
                 is SearchFrame.Error -> ErrorFrame(retryAction = bookViewModel::searchBooks)
                 is SearchFrame.Success -> {
-                    BookGridFrame(
+                    BookGrid(
                         books = uiState.searchFrame.books,
                         columnsCount = uiState.searchColumnsCount,
-                        scrollState = scrollState
+                        onBookSelect = { book ->
+                            bookViewModel.changeSelectedBook(book)
+                            navController.myNavigate(Routes.BOOK_INFO)
+                        },
+                        scrollState = scrollState,
+                        topHeight = OSearchBarDefaults.topHeight + WindowInsets.statusBars.asPaddingValues()
+                            .calculateTopPadding()
                     )
                 }
             }
@@ -209,69 +222,4 @@ fun ErrorFrame(
         }
     }
 
-}
-
-
-@Composable
-fun BookGridFrame(
-    books: List<Book>,
-    columnsCount: Int,
-    scrollState: LazyGridState = rememberLazyGridState(),
-    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier.fillMaxWidth()
-    ) {
-        val topHeight =
-            OSearchBarDefaults.topHeight + WindowInsets
-                .statusBars.asPaddingValues().calculateTopPadding()
-
-        val cellWidth = LocalConfiguration.current.screenWidthDp.dp / columnsCount
-        val cellHeight = 1.5 * cellWidth
-
-        LazyVerticalGrid(
-            state = scrollState,
-            columns = GridCells.Fixed(columnsCount),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.fillMaxWidth()
-
-        ) {
-
-            items(columnsCount) {
-                Spacer(
-                    modifier = Modifier.height(topHeight)
-                )
-            }
-
-            items(books) { book ->
-                BookCard(
-                    book = book,
-                    cellWidth = cellWidth,
-                    cellHeight = cellHeight,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun BookCard(
-    book: Book,
-    cellWidth: Dp,
-    cellHeight: Dp,
-) {
-    AsyncImage(
-        modifier = Modifier
-            .width(cellWidth)
-            .height(cellHeight),
-        model = ImageRequest.Builder(context = LocalContext.current)
-            .data(book.imageLink)
-            .crossfade(true)
-            .build(),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        error = painterResource(id = R.drawable.ic_broken_image),
-        placeholder = painterResource(id = R.drawable.loading_img)
-    )
 }
