@@ -1,13 +1,9 @@
-package ru.oraora.books.ui.screens.osearch
+package ru.oraora.books.ui.screens
 
 import android.annotation.SuppressLint
 import android.view.ViewTreeObserver
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.EaseInExpo
-import androidx.compose.animation.core.EaseInOutCirc
-import androidx.compose.animation.core.EaseInQuart
-import androidx.compose.animation.core.EaseInQuint
 import androidx.compose.animation.core.EaseOutQuint
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
@@ -247,7 +243,7 @@ fun OSearchBar(
     windowInsets: WindowInsets = WindowInsets.statusBars,
     animationProgress: State<Float> = OSearchBarDefaults.animationProgress(active = active),
 ) {
-
+    
     LaunchedEffect(animationProgress.value) {
         if (animationProgress.value == 0f) {
 
