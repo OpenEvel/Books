@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -43,15 +44,17 @@ fun BookGrid(
         modifier = modifier.fillMaxWidth()
     ) {
 
-        val cellWidth = LocalConfiguration.current.screenWidthDp.dp / columnsCount
+        val cellWidth = (LocalConfiguration.current.screenWidthDp.dp - 12.dp -8.dp -12.dp) / columnsCount
         val cellHeight = 1.5 * cellWidth
 
         LazyVerticalGrid(
             state = scrollState,
             columns = GridCells.Fixed(columnsCount),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.fillMaxWidth()
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 12.dp, end = 12.dp)
 
         ) {
 
@@ -65,7 +68,7 @@ fun BookGrid(
 
             items(books) { book ->
                 BookCard(
-                    book = book,
+                    imageLink = book.imageLink,
                     modifier = Modifier
                         .width(cellWidth)
                         .height(cellHeight)
@@ -74,19 +77,26 @@ fun BookGrid(
                         }
                 )
             }
+
+            items(columnsCount) {
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
+            }
+
         }
     }
 }
 
 @Composable
 fun BookCard(
-    book: Book,
+    imageLink: String?,
     modifier: Modifier = Modifier,
 ) {
     AsyncImage(
         modifier = modifier,
         model = ImageRequest.Builder(context = LocalContext.current)
-            .data(book.imageLink)
+            .data(imageLink)
             .crossfade(true)
             .build(),
         contentDescription = null,
