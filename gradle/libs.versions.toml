@@ -19,6 +19,8 @@ kotlinReflectVersion = "2.0.0-RC1"
 materialIconsExtended = "1.7.0-alpha07"
 uiToolingPreview = "1.7.0-alpha08"
 navigationCompose = "2.7.7"
+accompanistNavigationAnimation = "0.35.1-alpha"
+animation = "1.7.0-beta02"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,6 +48,8 @@ jetbrains-kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-refl
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "uiToolingPreview" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+accompanist-navigation-animation = { group = "com.google.accompanist", name = "accompanist-navigation-animation", version.ref = "accompanistNavigationAnimation" }
+androidx-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

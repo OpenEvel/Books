@@ -5,20 +5,19 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import ru.oraora.books.ui.screens.AdviceScreen
 import ru.oraora.books.ui.screens.BookInfoScreen
 import ru.oraora.books.ui.screens.FavoriteScreen
@@ -28,7 +27,6 @@ import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.Routes
 
-@Stable
 @Composable
 fun NavGraph(
     navController: NavHostController,
@@ -52,14 +50,28 @@ fun NavGraph(
         )
     }
 
-    val enterHorizontal = remember {
+    val enterLeft = remember {
         slideInHorizontally(
             animationSpec = tween(400),
             initialOffsetX = { it }
         )
     }
 
-    val exitHorizontal = remember {
+    val enterRight = remember {
+        slideInHorizontally(
+            animationSpec = tween(400),
+            initialOffsetX = { -it }
+        )
+    }
+
+    val exitLeft = remember {
+        slideOutHorizontally(
+            animationSpec = tween(400),
+            targetOffsetX = { -it }
+        )
+    }
+
+    val exitRight = remember {
         slideOutHorizontally(
             animationSpec = tween(400),
             targetOffsetX = { it }
@@ -86,8 +98,8 @@ fun NavGraph(
 
         composable(
             route = Routes.SEARCH,
-            enterTransition = { enterVertical },
-            exitTransition = { exitVertical }
+            enterTransition = { if (initialState.destination.isSelected(Routes.BOOK_INFO)) enterRight else enterVertical },
+            exitTransition = { if (targetState.destination.isSelected(Routes.BOOK_INFO)) exitLeft else exitVertical },
         ) {
             SearchScreen(
                 bookViewModel = bookViewModel,
@@ -113,8 +125,8 @@ fun NavGraph(
         }
         composable(
             route = Routes.BOOK_INFO,
-            enterTransition = { enterHorizontal },
-            exitTransition = { exitHorizontal }
+            enterTransition = { enterLeft },
+            exitTransition = { exitRight }
         ) {
             BookInfoScreen(
                 book = uiState.selectedBook,
