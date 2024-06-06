@@ -60,7 +60,7 @@ fun BookInfo(
         modifier = Modifier
             .fillMaxWidth()
             .height(backgroundHeight)
-            .blur(radiusX = 50.dp, radiusY = 50.dp)
+            .blur(radiusX = 20.dp, radiusY = 20.dp)
             .alpha(0.37f)
     )
     

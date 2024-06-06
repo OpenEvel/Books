@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
@@ -75,6 +76,8 @@ fun SearchScreen(
     scrollState: LazyGridState = rememberLazyGridState(),
     modifier: Modifier = Modifier,
 ) {
+    val scrollScope = rememberCoroutineScope()
+
     Box(
         modifier = modifier
     ) {
@@ -101,6 +104,7 @@ fun SearchScreen(
                 lastQuery = uiState.lastQuery,
                 onQueryChange = bookViewModel::onQueryChange,
                 onSearch = {
+                    scrollScope.launch { scrollState.scrollToItem(0,0) }
                     bookViewModel.searchBooks()
                 },
                 active = uiState.isSearchActive,
@@ -121,13 +125,7 @@ fun SearchScreen(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Если у нас меняется экран поиска
-            LaunchedEffect(uiState.searchFrame) {
-                coroutineScope {
-                    // Выставляем скрол на начальную позицию
-                    launch { scrollState.scrollToItem(0, 0) }
-                }
-            }
+
             when (uiState.searchFrame) {
                 is SearchFrame.FirstEnter -> FirstEnterFrame()
                 is SearchFrame.Loading -> LoadingFrame()
