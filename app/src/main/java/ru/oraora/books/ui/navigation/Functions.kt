@@ -15,6 +15,6 @@ fun NavController.myNavigate(route: String) {
     }
 }
 
-fun NavDestination?.isSelected(route: String): Boolean {
+fun NavDestination?.isCurrent(route: String): Boolean {
     return this?.hierarchy?.any { it.route == route } == true
 }

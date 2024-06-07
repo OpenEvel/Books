@@ -39,7 +39,7 @@ fun BottomNavigationBar(
     val currentDestination: NavDestination?
     val isRealBookInfo: Boolean
 
-    if (!navBackStackEntry?.destination.isSelected(Routes.BOOK_INFO)) {
+    if (!navBackStackEntry?.destination.isCurrent(Routes.BOOK_INFO)) {
         currentDestination = navBackStackEntry?.destination
         isRealBookInfo = false
     } else {
@@ -62,7 +62,7 @@ fun BottomNavigationBar(
             ) {
 
                 NavigationBarItem(
-                    selected = currentDestination.isSelected(Routes.ADVICE),
+                    selected = currentDestination.isCurrent(Routes.ADVICE),
                     onClick = { navController.myNavigate(Routes.ADVICE) },
                     icon = {
                         Icon(
@@ -76,9 +76,9 @@ fun BottomNavigationBar(
 
                 // Search Screen
                 NavigationBarItem(
-                    selected = currentDestination.isSelected(Routes.SEARCH),
+                    selected = currentDestination.isCurrent(Routes.SEARCH),
                     onClick = {
-                        if (!isRealBookInfo && currentDestination.isSelected(Routes.SEARCH)) {
+                        if (!isRealBookInfo && currentDestination.isCurrent(Routes.SEARCH)) {
                             activateSearch()
                         } else {
                             navController.myNavigate(Routes.SEARCH)
@@ -94,11 +94,11 @@ fun BottomNavigationBar(
 
                 // Favorite Screen
                 NavigationBarItem(
-                    selected = currentDestination.isSelected(Routes.FAVORITE),
+                    selected = currentDestination.isCurrent(Routes.FAVORITE),
                     onClick = { navController.myNavigate(Routes.FAVORITE) },
                     icon = {
                         val bookmarksIcon: ImageVector =
-                            if (currentDestination.isSelected(Routes.FAVORITE)) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks
+                            if (currentDestination.isCurrent(Routes.FAVORITE)) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks
                         Icon(bookmarksIcon, contentDescription = null)
                     }
                 )

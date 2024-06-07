@@ -36,16 +36,17 @@ fun NavGraph(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
+
     val enterVertical = remember {
         slideInVertically(
-            animationSpec = tween(400),
+            animationSpec = tween(600),
             initialOffsetY = { it }
         )
     }
 
     val exitVertical = remember {
         slideOutVertically(
-            animationSpec = tween(400),
+            animationSpec = tween(600),
             targetOffsetY = { it }
         )
     }
@@ -98,8 +99,8 @@ fun NavGraph(
 
         composable(
             route = Routes.SEARCH,
-            enterTransition = { if (initialState.destination.isSelected(Routes.BOOK_INFO)) enterRight else enterVertical },
-            exitTransition = { if (targetState.destination.isSelected(Routes.BOOK_INFO)) exitLeft else exitVertical },
+            enterTransition = { if (initialState.destination.isCurrent(Routes.BOOK_INFO)) enterRight else enterVertical },
+            exitTransition = { if (targetState.destination.isCurrent(Routes.BOOK_INFO)) exitLeft else exitVertical },
         ) {
             SearchScreen(
                 bookViewModel = bookViewModel,
