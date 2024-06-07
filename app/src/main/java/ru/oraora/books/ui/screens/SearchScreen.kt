@@ -143,6 +143,7 @@ fun SearchScreen(
                         topHeight = OSearchBarDefaults.topHeight + WindowInsets.statusBars.asPaddingValues()
                             .calculateTopPadding()
                     )
+
                 }
             }
         }
