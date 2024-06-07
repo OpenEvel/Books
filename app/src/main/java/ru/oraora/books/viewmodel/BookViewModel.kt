@@ -33,6 +33,9 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
             _deletedSearchHistory
         )
 
+    private val _searchingBooks = mutableStateListOf<Book>()
+    val searchingBooks: List<Book> get() = Collections.unmodifiableList(_searchingBooks)
+
     fun addHistory(query: String) {
         viewModelScope.launch {
             if (query.trim().isNotEmpty() && query !in _searchHistory) {
@@ -62,28 +65,48 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         }
     }
 
-    fun searchBooks() {
+    fun loadBooks() {
+        getBooks(SearchState.Loading)
+    }
+
+    fun refreshBooks() {
+        getBooks(SearchState.Refreshing)
+    }
+
+
+    private fun getBooks(state: SearchState) {
         viewModelScope.launch {
             // Ставим состояние, что мы загружаем информацию
             // а также сохраняем последний запрос
             _uiState.update {
                 it.copy(
-                    searchFrame = SearchFrame.Loading,
+                    searchState = state,
                     lastQuery = it.query
                 )
+            }
+
+            var newBooks: List<Book> = emptyList()
+
+
+            val resState = try {
+                newBooks = bookRepository.getBooks(_uiState.value.lastQuery.text)
+                SearchState.Success
+            } catch (e: IOException) {
+                SearchState.Error
+            } catch (e: HttpException) {
+                SearchState.Error
+            }
+
+            if (resState is SearchState.Success) {
+                _searchingBooks.clear()
+                _searchingBooks.addAll(newBooks)
             }
 
             // Загружаем данные с сервера
             // Если в процессе загрузки возникает ошибка то показываем экран ошибки
             _uiState.update {
                 it.copy(
-                    searchFrame = try {
-                        SearchFrame.Success(bookRepository.getBooks(it.lastQuery.text))
-                    } catch (e: IOException) {
-                        SearchFrame.Error
-                    } catch (e: HttpException) {
-                        SearchFrame.Error
-                    }
+                    searchState = resState
                 )
             }
         }

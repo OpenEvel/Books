@@ -25,10 +25,14 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -67,8 +71,9 @@ import ru.oraora.books.ui.screens.osearch.TopSearchBar
 import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.Routes
-import ru.oraora.books.viewmodel.SearchFrame
+import ru.oraora.books.viewmodel.SearchState
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SearchScreen(
     bookViewModel: BookViewModel,
@@ -79,8 +84,13 @@ fun SearchScreen(
 ) {
     val scrollScope = rememberCoroutineScope()
 
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = uiState.searchState is SearchState.Refreshing,
+        onRefresh = bookViewModel::refreshBooks
+    )
+
     Box(
-        modifier = modifier
+        modifier = modifier.pullRefresh(pullRefreshState)
     ) {
         Box(
             modifier = Modifier
@@ -105,8 +115,8 @@ fun SearchScreen(
                 lastQuery = uiState.lastQuery,
                 onQueryChange = bookViewModel::onQueryChange,
                 onSearch = {
-                    scrollScope.launch { scrollState.scrollToItem(0,0) }
-                    bookViewModel.searchBooks()
+                    scrollScope.launch { scrollState.scrollToItem(0, 0) }
+                    bookViewModel.loadBooks()
                 },
                 active = uiState.isSearchActive,
                 onActiveChange = bookViewModel::onSearchActiveChange,
@@ -127,13 +137,13 @@ fun SearchScreen(
             modifier = Modifier.fillMaxSize()
         ) {
 
-            when (uiState.searchFrame) {
-                is SearchFrame.FirstEnter -> FirstEnterFrame()
-                is SearchFrame.Loading -> LoadingFrame()
-                is SearchFrame.Error -> ErrorFrame(retryAction = bookViewModel::searchBooks)
-                is SearchFrame.Success -> {
+            when (uiState.searchState) {
+                is SearchState.FirstEnter -> FirstEnterFrame()
+                is SearchState.Loading -> LoadingFrame()
+                is SearchState.Error -> ErrorFrame(retryAction = bookViewModel::loadBooks)
+                else -> {
                     BookGrid(
-                        books = uiState.searchFrame.books,
+                        books = bookViewModel.searchingBooks,
                         columnsCount = uiState.searchColumnsCount,
                         onBookSelect = { book ->
                             bookViewModel.changeSelectedBook(book)
@@ -143,7 +153,16 @@ fun SearchScreen(
                         topHeight = OSearchBarDefaults.topHeight + WindowInsets.statusBars.asPaddingValues()
                             .calculateTopPadding()
                     )
-
+                    PullRefreshIndicator(
+                        refreshing = uiState.searchState is SearchState.Refreshing,
+                        state = pullRefreshState,
+                        modifier = Modifier
+                            .padding(top = OSearchBarDefaults.topHeight + WindowInsets.statusBars.asPaddingValues()
+                                .calculateTopPadding())
+                            .align(Alignment.TopCenter)
+                            .zIndex(2f),
+//            backgroundColor = if (viewModel.state.value.isLoading) Color.Red else Color.Green,
+                    )
                 }
             }
         }
