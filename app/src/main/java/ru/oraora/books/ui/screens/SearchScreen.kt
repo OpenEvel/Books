@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -192,11 +193,15 @@ fun LoadingFrame() {
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            modifier = Modifier.size(200.dp),
-            painter = painterResource(R.drawable.loading_img),
-            contentDescription = stringResource(R.string.loading)
+        CircularProgressIndicator(
+            modifier = Modifier
+                .size(120.dp)
         )
+//        Image(
+//            modifier = Modifier.size(200.dp),
+//            painter = painterResource(R.drawable.loading_img),
+//            contentDescription = stringResource(R.string.loading)
+//        )
     }
 }
 
