@@ -80,7 +80,7 @@ fun SearchScreen(
     uiState: BookUiState,
     navController: NavHostController,
     scrollState: LazyGridState = rememberLazyGridState(),
-    modifier: Modifier = Modifier,
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
     val scrollScope = rememberCoroutineScope()
 
@@ -136,7 +136,6 @@ fun SearchScreen(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-
             when (uiState.searchState) {
                 is SearchState.FirstEnter -> FirstEnterFrame()
                 is SearchState.Loading -> LoadingFrame()
