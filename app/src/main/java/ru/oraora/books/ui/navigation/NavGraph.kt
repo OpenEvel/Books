@@ -114,10 +114,12 @@ fun NavGraph(
 
         composable(
             route = Routes.FAVORITE,
-            enterTransition = { enterVertical },
-            exitTransition = { exitVertical }
+            enterTransition = { if (initialState.destination.isCurrent(Routes.BOOK_INFO)) enterRight else enterVertical },
+            exitTransition = { if (targetState.destination.isCurrent(Routes.BOOK_INFO)) exitLeft else exitVertical },
         ) {
             FavoriteScreen(
+                bookViewModel = bookViewModel,
+                uiState = uiState,
                 navController = navController,
                 modifier = Modifier
                     .fillMaxSize()

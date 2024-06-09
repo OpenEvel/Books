@@ -54,10 +54,12 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     }
 
     fun realRemoveHistory() {
-        for (deletedQuery in _deletedSearchHistory) {
-            _searchHistory.remove(deletedQuery)
+        viewModelScope.launch {
+            for (deletedQuery in _deletedSearchHistory) {
+                _searchHistory.remove(deletedQuery)
+            }
+            _deletedSearchHistory.clear()
         }
-        _deletedSearchHistory.clear()
     }
 
 
@@ -70,13 +72,19 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
 
     fun addFavorite(book: Book) {
         viewModelScope.launch {
-            _favoriteBooks.add(book)
+            _favoriteBooks.add(0, book)
         }
     }
 
     fun removeFavorite(bookId: String) {
         viewModelScope.launch {
             _favoriteBooks.removeIf { it.id == bookId }
+        }
+    }
+
+   fun clearFavorite() {
+        viewModelScope.launch {
+            _favoriteBooks.clear()
         }
     }
 
