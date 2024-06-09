@@ -149,6 +149,9 @@ fun SearchScreen(
                             navController.myNavigate(Routes.BOOK_INFO)
                         },
                         scrollState = scrollState,
+                        favoriteBooks = bookViewModel.favoriteBooks,
+                        onAddFavorite = bookViewModel::addFavorite,
+                        onRemoveFavorite = bookViewModel::removeFavorite,
                         topHeight = OSearchBarDefaults.topHeight + WindowInsets.statusBars.asPaddingValues()
                             .calculateTopPadding()
                     )
@@ -160,7 +163,6 @@ fun SearchScreen(
                                 .calculateTopPadding())
                             .align(Alignment.TopCenter)
                             .zIndex(2f),
-//            backgroundColor = if (viewModel.state.value.isLoading) Color.Red else Color.Green,
                     )
                 }
             }

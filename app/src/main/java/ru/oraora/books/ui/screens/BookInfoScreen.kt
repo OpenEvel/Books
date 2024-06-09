@@ -24,7 +24,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.ui.screens.obook.BookCard
+import ru.oraora.books.ui.screens.obook.BookImage
 
 @Composable
 fun BookInfoScreen(
@@ -55,7 +55,7 @@ fun BookInfo(
             .calculateTopPadding()+12.dp
     val backgroundHeight = topHeight + 320.dp
 
-    BookCard(
+    BookImage(
         imageLink = book.imageLink,
         modifier = Modifier
             .fillMaxWidth()
@@ -70,7 +70,7 @@ fun BookInfo(
     ) {
         Spacer(modifier = Modifier.height(topHeight))
 
-        BookCard(
+        BookImage(
             imageLink = book.imageLink,
             modifier = Modifier
                 .size(200.dp, 300.dp)

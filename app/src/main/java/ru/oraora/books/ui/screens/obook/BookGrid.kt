@@ -11,6 +11,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -18,13 +19,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
@@ -44,20 +51,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import coil.request.ImageRequest
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
 import ru.oraora.books.ui.navigation.myNavigate
+import ru.oraora.books.ui.screens.shimmer.Shimmer
 import ru.oraora.books.ui.theme.BooksTheme
 import ru.oraora.books.ui.theme.ShimmerColorShades
 import ru.oraora.books.viewmodel.Routes
+
+import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
+import androidx.compose.ui.composed
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun BookGrid(
     books: List<Book>,
     columnsCount: Int,
     onBookSelect: (Book) -> Unit,
+    favoriteBooks: List<Book>,
+    onAddFavorite: (Book) -> Unit = {},
+    onRemoveFavorite: (String) -> Unit = {},
     scrollState: LazyGridState = rememberLazyGridState(),
     topHeight: Dp = 0.dp,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
@@ -91,10 +109,12 @@ fun BookGrid(
 
             items(books) { book ->
                 BookCard(
-                    imageLink = book.imageLink,
+                    book = book,
+                    isBookmarked = favoriteBooks.any { it.id == book.id },
+                    onAddFavorite = onAddFavorite,
+                    onRemoveFavorite = onRemoveFavorite,
                     modifier = Modifier
-                        .width(cellWidth)
-                        .height(cellHeight)
+                        .size(cellWidth, cellHeight)
                         .clickable {
                             onBookSelect(book)
                         }
@@ -112,36 +132,19 @@ fun BookGrid(
 }
 
 @Composable
-fun BookCard(
+fun BookImage(
     imageLink: String?,
     modifier: Modifier = Modifier,
 ) {
     SubcomposeAsyncImage(
-        model = imageLink,
+        model = ImageRequest.Builder(context = LocalContext.current)
+            .data(imageLink)
+            .crossfade(true)
+            .build(),
         contentDescription = null,
         contentScale = ContentScale.Crop,
         loading = {
-            val transition = rememberInfiniteTransition(label = "")
-            val translateAnim by transition.animateFloat(
-                initialValue = 0f,
-                targetValue = 2000f,
-                animationSpec = infiniteRepeatable(
-                    tween(durationMillis = 1200, easing = FastOutSlowInEasing),
-                    RepeatMode.Restart
-                ), label = ""
-            )
-
-            val brush = Brush.linearGradient(
-                colors = ShimmerColorShades,
-                start = Offset(10f, 10f),
-                end = Offset(translateAnim, translateAnim)
-            )
-
-            Spacer(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(brush = brush)
-            )
+            Shimmer(modifier = Modifier.fillMaxSize())
         },
         error = {
             Image(
@@ -151,16 +154,78 @@ fun BookCard(
         },
         modifier = modifier,
     )
+}
 
-//    AsyncImage(
-//        modifier = modifier,
-//        model = ImageRequest.Builder(context = LocalContext.current)
-//            .data(imageLink)
-//            .crossfade(true)
-//            .build(),
-//        contentDescription = null,
-//        contentScale = ContentScale.Crop,
-//        error = painterResource(id = R.drawable.ic_broken_image),
-//        placeholder = painterResource(id = R.drawable.loading_img)
-//    )
+@Composable
+fun BookCard(
+    book: Book,
+    isBookmarked: Boolean = false,
+    onAddFavorite: (Book) -> Unit = {},
+    onRemoveFavorite: (String) -> Unit = {},
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
+) {
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(context = LocalContext.current)
+            .data(book.imageLink)
+            .crossfade(true)
+            .build(),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = modifier,
+    ) {
+
+        if (painter.state is AsyncImagePainter.State.Loading) {
+            Shimmer(modifier = Modifier.fillMaxSize())
+        } else {
+            if (painter.state is AsyncImagePainter.State.Error) {
+                Image(
+                    painter = painterResource(R.drawable.ic_broken_image),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                SubcomposeAsyncImageContent()
+            }
+
+            val colorStops = arrayOf(
+                0.0f to Color.Transparent,
+                0.6f to Color.Transparent,
+                0.7f to Color.Black.copy(0.02f),
+                0.8f to Color.Black.copy(0.06f),
+                1f to Color.Black.copy(0.1f)
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.linearGradient(
+                            start = Offset(0f, Float.POSITIVE_INFINITY),
+                            end = Offset(Float.POSITIVE_INFINITY, 0f),
+                            colorStops = colorStops,
+                        )
+                    ),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                Icon(
+                    imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(28.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            if (isBookmarked) {
+                                onRemoveFavorite(book.id)
+                            } else {
+                                onAddFavorite(book)
+                            }
+                        }
+                )
+            }
+        }
+    }
 }

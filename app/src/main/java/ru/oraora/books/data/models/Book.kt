@@ -6,6 +6,7 @@ import retrofit2.converter.ogson.https.Https
 
 
 data class Book(
+    val id: String,
     @Extract("volumeInfo")
     val title: String?,
     @Extract("volumeInfo")

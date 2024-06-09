@@ -242,7 +242,7 @@ fun OSearchBar(
     windowInsets: WindowInsets = WindowInsets.statusBars,
     animationProgress: State<Float> = OSearchBarDefaults.animationProgress(active = active),
 ) {
-    
+
     LaunchedEffect(animationProgress.value) {
         if (animationProgress.value == 0f) {
 
@@ -428,14 +428,14 @@ fun OSearchBar(
                             AnimatedVisibility(
                                 visible = it !in deletedHistory,
                                 enter = expandVertically(),
-                                exit = fadeOut()  + shrinkVertically()
+                                exit = fadeOut() + shrinkVertically()
                             ) {
                                 HistoryItem(
                                     history = it,
                                     onItemClick = {
                                         onActiveChange(false)
                                         keyboardController?.hide()
-                                        onQueryChange(TextFieldValue(text=it))
+                                        onQueryChange(TextFieldValue(text = it))
                                         onSearch()
                                     },
                                     removeHistory = removeHistory,
@@ -482,7 +482,10 @@ fun HistoryItem(
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             modifier = Modifier
                 .padding(start = 8.dp, end = 16.dp)
-                .clickable { removeHistory(history) },
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { removeHistory(history) },
         )
 
     }
@@ -550,7 +553,12 @@ fun OSearchBarField(
                 onActiveChange(it.isFocused)
             },
         singleLine = true,
-        textStyle = LocalTextStyle.current.merge(TextStyle(color = textColor, textDecoration = TextDecoration.None)),
+        textStyle = LocalTextStyle.current.merge(
+            TextStyle(
+                color = textColor,
+                textDecoration = TextDecoration.None
+            )
+        ),
         cursorBrush = SolidColor(colors.cursorColor),
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Search

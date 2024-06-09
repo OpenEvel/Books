@@ -36,6 +36,9 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     private val _searchingBooks = mutableStateListOf<Book>()
     val searchingBooks: List<Book> get() = Collections.unmodifiableList(_searchingBooks)
 
+    private val _favoriteBooks = mutableStateListOf<Book>()
+    val favoriteBooks: List<Book> get() = Collections.unmodifiableList(_favoriteBooks)
+
     fun addHistory(query: String) {
         viewModelScope.launch {
             if (query.trim().isNotEmpty() && query !in _searchHistory) {
@@ -62,6 +65,18 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         viewModelScope.launch {
             _searchHistory.clear()
             _deletedSearchHistory.clear()
+        }
+    }
+
+    fun addFavorite(book: Book) {
+        viewModelScope.launch {
+            _favoriteBooks.add(book)
+        }
+    }
+
+    fun removeFavorite(bookId: String) {
+        viewModelScope.launch {
+            _favoriteBooks.removeIf { it.id == bookId }
         }
     }
 
