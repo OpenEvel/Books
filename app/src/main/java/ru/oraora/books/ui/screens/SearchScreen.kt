@@ -119,9 +119,7 @@ fun SearchScreen(
                 trailingIcon = { Icon(Icons.Default.Cancel, contentDescription = "Cancel icon") },
                 searchHistory = bookViewModel.searchHistory,
                 addHistory = bookViewModel::addHistory,
-                deletedHistory = bookViewModel.deletedSearchHistory,
                 removeHistory = bookViewModel::removeHistory,
-                realRemoveHistory = bookViewModel::realRemoveHistory,
                 clearHistory = bookViewModel::clearHistory,
                 scrollState = scrollState,
             )
@@ -290,10 +288,12 @@ fun SearchBookGrid(
                 )
             }
 
-            items(columnsCount) {
-                Spacer(
-                    modifier = Modifier.height(5.dp)
-                )
+            if (favoriteBooks.isNotEmpty()) {
+                items(columnsCount) {
+                    Spacer(
+                        modifier = Modifier.height(5.dp)
+                    )
+                }
             }
 
         }

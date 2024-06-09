@@ -27,12 +27,6 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     private val _searchHistory = mutableStateListOf<String>("A", "B", "C")
     val searchHistory: List<String> get() = Collections.unmodifiableList(_searchHistory)
 
-    private val _deletedSearchHistory = mutableStateListOf<String>()
-    val deletedSearchHistory: List<String>
-        get() = Collections.unmodifiableList(
-            _deletedSearchHistory
-        )
-
     private val _searchingBooks = mutableStateListOf<Book>()
     val searchingBooks: List<Book> get() = Collections.unmodifiableList(_searchingBooks)
 
@@ -49,24 +43,13 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
 
     fun removeHistory(history: String) {
         viewModelScope.launch {
-            _deletedSearchHistory.add(history)
+            _searchHistory.remove(history)
         }
     }
-
-    fun realRemoveHistory() {
-        viewModelScope.launch {
-            for (deletedQuery in _deletedSearchHistory) {
-                _searchHistory.remove(deletedQuery)
-            }
-            _deletedSearchHistory.clear()
-        }
-    }
-
 
     fun clearHistory() {
         viewModelScope.launch {
             _searchHistory.clear()
-            _deletedSearchHistory.clear()
         }
     }
 
@@ -112,7 +95,7 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
 
 
             val resState = try {
-                newBooks = bookRepository.getBooks(_uiState.value.lastQuery.text)
+                newBooks = bookRepository.getBooks(_uiState.value.query.text)
                 SearchState.Success
             } catch (e: IOException) {
                 SearchState.Error

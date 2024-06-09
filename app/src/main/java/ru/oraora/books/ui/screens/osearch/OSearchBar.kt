@@ -63,6 +63,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.structuralEqualityPolicy
@@ -101,6 +102,8 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ru.oraora.books.ui.LocalSearchRequester
 import kotlin.math.max
 import kotlin.math.min
@@ -122,9 +125,7 @@ fun TopSearchBar(
     trailingIcon: (@Composable () -> Unit)? = null,
     searchHistory: List<String>,
     addHistory: (String) -> Unit,
-    deletedHistory: List<String>,
     removeHistory: (String) -> Unit,
-    realRemoveHistory: () -> Unit,
     clearHistory: () -> Unit,
     animationProgress: State<Float> = OSearchBarDefaults.animationProgress(active = active),
 ) {
@@ -165,9 +166,7 @@ fun TopSearchBar(
                     trailingIcon = trailingIcon,
                     searchHistory = searchHistory,
                     addHistory = addHistory,
-                    deletedHistory = deletedHistory,
                     removeHistory = removeHistory,
-                    realRemoveHistory = realRemoveHistory,
                     clearHistory = clearHistory,
                     animationProgress = animationProgress,
                 )
@@ -227,9 +226,7 @@ fun OSearchBar(
     onActiveChange: (Boolean) -> Unit,
     searchHistory: List<String>,
     addHistory: (String) -> Unit,
-    deletedHistory: List<String>,
     removeHistory: (String) -> Unit,
-    realRemoveHistory: () -> Unit,
     clearHistory: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -242,22 +239,6 @@ fun OSearchBar(
     windowInsets: WindowInsets = WindowInsets.statusBars,
     animationProgress: State<Float> = OSearchBarDefaults.animationProgress(active = active),
 ) {
-
-    LaunchedEffect(animationProgress.value) {
-        if (animationProgress.value == 0f) {
-
-            if (query != lastQuery) {
-                onQueryChange(lastQuery)
-            }
-
-            if (query.text.trim().isNotEmpty() && query.text !in searchHistory) {
-                addHistory(query.text)
-            }
-            if (deletedHistory.isNotEmpty()) {
-                realRemoveHistory()
-            }
-        }
-    }
     val keyboardController = LocalSoftwareKeyboardController.current
     val density = LocalDensity.current
 
@@ -266,6 +247,13 @@ fun OSearchBar(
         derivedStateOf(structuralEqualityPolicy()) { animationProgress.value == 1f }
     }
 
+    LaunchedEffect(useFullScreenShape) {
+        if (!useFullScreenShape) {
+            if (query != lastQuery) {
+                onQueryChange(lastQuery)
+            }
+        }
+    }
 
     val animatedShape = remember(useFullScreenShape) {
         // Если заполняем весь экран
@@ -278,8 +266,6 @@ fun OSearchBar(
                 // Если прогресс анимации = 0,
                 // то получаетя полоска с полностью круглыми краями
                 // По мере прогреса анимации скругление уменьшается
-//                val radius = size.height * (1 - animationProgress.value) / 2
-
                 val radius = with(density) {
                     (OSearchBarDefaults.fieldHeight * (1 - animationProgress.value)).toPx()
                 }
@@ -298,6 +284,8 @@ fun OSearchBar(
             20.dp + unconsumedInsets.asPaddingValues(density).calculateTopPadding()
         }
     }
+
+    val searchScope = rememberCoroutineScope()
 
     Surface(
         shape = animatedShape,
@@ -348,7 +336,10 @@ fun OSearchBar(
                     keyboardController?.hide()
                     // Обновить историю поиска и выполнить поиск
                     onSearch()
-//                    addHistory(query)
+                    searchScope.launch {
+                        delay(350)
+                        addHistory(query.text)
+                    }
                 },
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon?.let { trailing ->
@@ -387,6 +378,7 @@ fun OSearchBar(
             if (imeBottomPadding < 0.dp) {
                 imeBottomPadding = 0.dp
             }
+
             if (showHistory) {
                 Column(
                     Modifier
@@ -394,9 +386,9 @@ fun OSearchBar(
                         .graphicsLayer { alpha = animationProgress.value }) {
                     HorizontalDivider(color = colors.dividerColor)
                     AnimatedVisibility(
-                        visible = searchHistory.size > deletedHistory.size,
+                        visible = searchHistory.isNotEmpty(),
                         enter = expandVertically(),
-                        exit = shrinkVertically()
+                        exit = shrinkVertically() + fadeOut()
 
                     ) {
                         Row(
@@ -424,9 +416,11 @@ fun OSearchBar(
                         }
                     }
                     LazyColumn {
-                        items(searchHistory) {
+                        items(searchHistory, key = { it }) {
+                            var isVisible by remember { mutableStateOf(true) }
+
                             AnimatedVisibility(
-                                visible = it !in deletedHistory,
+                                visible = isVisible,
                                 enter = expandVertically(),
                                 exit = fadeOut() + shrinkVertically()
                             ) {
@@ -438,7 +432,14 @@ fun OSearchBar(
                                         onQueryChange(TextFieldValue(text = it))
                                         onSearch()
                                     },
-                                    removeHistory = removeHistory,
+                                    removeHistory = { bookId ->
+                                        isVisible = false
+                                        searchScope.launch {
+                                            // Duration of the fadeOut animation
+                                            delay(300)
+                                            removeHistory(bookId)
+                                        }
+                                    },
                                 )
                             }
                         }
