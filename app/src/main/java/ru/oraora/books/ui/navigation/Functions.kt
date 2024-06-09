@@ -5,7 +5,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 
-fun NavController.myNavigate(route: String) {
+fun NavController.navigateWithBackStart(route: String) {
     navigate(route) {
         popUpTo(graph.findStartDestination().id) {
             saveState = true

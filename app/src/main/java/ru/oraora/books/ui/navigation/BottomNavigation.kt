@@ -1,11 +1,8 @@
 package ru.oraora.books.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
@@ -18,7 +15,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -63,7 +59,7 @@ fun BottomNavigationBar(
 
                 NavigationBarItem(
                     selected = currentDestination.isCurrent(Routes.ADVICE),
-                    onClick = { navController.myNavigate(Routes.ADVICE) },
+                    onClick = { navController.navigateWithBackStart(Routes.ADVICE) },
                     icon = {
                         Icon(
                             painter = painterResource(
@@ -81,7 +77,7 @@ fun BottomNavigationBar(
                         if (!isRealBookInfo && currentDestination.isCurrent(Routes.SEARCH)) {
                             activateSearch()
                         } else {
-                            navController.myNavigate(Routes.SEARCH)
+                            navController.navigateWithBackStart(Routes.SEARCH)
                         }
                     },
                     icon = {
@@ -95,7 +91,7 @@ fun BottomNavigationBar(
                 // Favorite Screen
                 NavigationBarItem(
                     selected = currentDestination.isCurrent(Routes.FAVORITE),
-                    onClick = { navController.myNavigate(Routes.FAVORITE) },
+                    onClick = { navController.navigateWithBackStart(Routes.FAVORITE) },
                     icon = {
                         val bookmarksIcon: ImageVector =
                             if (currentDestination.isCurrent(Routes.FAVORITE)) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks

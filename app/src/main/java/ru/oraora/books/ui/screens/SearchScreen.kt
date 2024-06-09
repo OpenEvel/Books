@@ -58,7 +58,6 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.ui.navigation.myNavigate
 import ru.oraora.books.ui.screens.obook.BookCard
 import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults
 import ru.oraora.books.ui.screens.osearch.TopSearchBar
@@ -138,7 +137,10 @@ fun SearchScreen(
                         columnsCount = uiState.searchColumnsCount,
                         onBookSelect = { book ->
                             bookViewModel.changeSelectedBook(book)
-                            navController.myNavigate(Routes.BOOK_INFO)
+                            navController.navigate(Routes.BOOK_INFO) {
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         },
                         scrollState = scrollState,
                         favoriteBooks = bookViewModel.favoriteBooks,
