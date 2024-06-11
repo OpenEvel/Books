@@ -79,7 +79,6 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
@@ -245,13 +244,12 @@ fun OSearchBar(
 
     val useFullScreenShape by remember {
         derivedStateOf(structuralEqualityPolicy()) { animationProgress.value == 1f }
-//        derivedStateOf { animationProgress.value == 1f }
     }
 
     LaunchedEffect(useFullScreenShape) {
         if (!useFullScreenShape) {
             if (query != lastQuery) {
-                onQueryChange(lastQuery)
+                onQueryChange(TextFieldValue(text = lastQuery.text))
             }
         }
     }
@@ -562,7 +560,7 @@ fun OSearchBarField(
             )
         ),
         cursorBrush = SolidColor(colors.cursorColor),
-        keyboardOptions = KeyboardOptions(
+        keyboardOptions = KeyboardOptions.Default.copy(
             imeAction = ImeAction.Search
         ),
         keyboardActions = KeyboardActions(

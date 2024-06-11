@@ -130,7 +130,8 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
-                    query = TextFieldValue(newQuery.text, selection = newQuery.selection)
+//                    query = TextFieldValue(newQuery.text, selection = newQuery.selection)
+                    query = newQuery
                 )
             }
         }
