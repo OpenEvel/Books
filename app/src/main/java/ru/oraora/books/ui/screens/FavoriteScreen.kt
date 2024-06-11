@@ -130,7 +130,7 @@ fun FavoriteBookGrid(
     ) {
 
         val cellWidth =
-            (LocalConfiguration.current.screenWidthDp.dp - 12.dp - 8.dp - 12.dp) / columnsCount
+            (LocalConfiguration.current.screenWidthDp.dp - 16.dp - 8.dp - 16.dp) / columnsCount
         val cellHeight = 1.5 * cellWidth
 
         LazyVerticalGrid(
@@ -140,7 +140,7 @@ fun FavoriteBookGrid(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 12.dp, end = 12.dp)
+                .padding(horizontal = 16.dp)
 
         ) {
 

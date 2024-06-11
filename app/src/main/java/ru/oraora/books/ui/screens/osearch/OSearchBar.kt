@@ -245,6 +245,7 @@ fun OSearchBar(
 
     val useFullScreenShape by remember {
         derivedStateOf(structuralEqualityPolicy()) { animationProgress.value == 1f }
+//        derivedStateOf { animationProgress.value == 1f }
     }
 
     LaunchedEffect(useFullScreenShape) {
@@ -383,7 +384,7 @@ fun OSearchBar(
                 Column(
                     Modifier
                         .padding(bottom = imeBottomPadding)
-                        .graphicsLayer { alpha = animationProgress.value }) {
+                ) {
                     HorizontalDivider(color = colors.dividerColor)
                     AnimatedVisibility(
                         visible = searchHistory.isNotEmpty(),
