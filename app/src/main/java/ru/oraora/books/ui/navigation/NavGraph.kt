@@ -1,10 +1,11 @@
 package ru.oraora.books.ui.navigation
 
+import androidx.compose.animation.core.EaseInOutExpo
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -34,46 +35,42 @@ fun NavGraph(
     modifier: Modifier = Modifier
 ) {
 
-    val enterVertical = remember {
-        slideInVertically(
-            animationSpec = tween(600),
-            initialOffsetY = { it }
-        )
+    val bottomNavDuration = 250
+    val enterByBottomNav = remember {
+        fadeIn(animationSpec = tween(bottomNavDuration))
+    }
+    val exitByBottomNav = remember {
+        fadeOut(animationSpec = tween(bottomNavDuration))
     }
 
-    val exitVertical = remember {
-        slideOutVertically(
-            animationSpec = tween(600),
-            targetOffsetY = { it }
-        )
-    }
+    val bookInfoDuration = 500
 
     val enterLeft = remember {
         slideInHorizontally(
-            animationSpec = tween(400),
+            animationSpec = tween(bookInfoDuration),
             initialOffsetX = { it }
-        )
+        ) + fadeIn(animationSpec = tween(bookInfoDuration))
     }
 
     val enterRight = remember {
         slideInHorizontally(
-            animationSpec = tween(400),
+            animationSpec = tween(bookInfoDuration),
             initialOffsetX = { -it }
-        )
+        ) + fadeIn(animationSpec = tween(bookInfoDuration))
     }
 
     val exitLeft = remember {
         slideOutHorizontally(
-            animationSpec = tween(400),
+            animationSpec = tween(bookInfoDuration),
             targetOffsetX = { -it }
-        )
+        ) + fadeOut(animationSpec = tween(bookInfoDuration))
     }
 
     val exitRight = remember {
         slideOutHorizontally(
-            animationSpec = tween(400),
+            animationSpec = tween(bookInfoDuration),
             targetOffsetX = { it }
-        )
+        ) + fadeOut(animationSpec = tween(bookInfoDuration))
     }
 
     NavHost(
@@ -83,8 +80,8 @@ fun NavGraph(
     ) {
         composable(
             route = Routes.ADVICE,
-            enterTransition = { enterVertical },
-            exitTransition = { exitVertical }
+            enterTransition = { enterByBottomNav },
+            exitTransition = { exitByBottomNav }
         ) {
             AdviceScreen(
                 navController = navController,
@@ -96,8 +93,8 @@ fun NavGraph(
 
         composable(
             route = Routes.SEARCH,
-            enterTransition = { if (initialState.destination.isCurrent(Routes.BOOK_INFO)) enterRight else enterVertical },
-            exitTransition = { if (targetState.destination.isCurrent(Routes.BOOK_INFO)) exitLeft else exitVertical },
+            enterTransition = { if (initialState.destination.isCurrent(Routes.BOOK_INFO)) enterRight else enterByBottomNav },
+            exitTransition = { if (targetState.destination.isCurrent(Routes.BOOK_INFO)) exitLeft else exitByBottomNav },
         ) {
             SearchScreen(
                 bookViewModel = bookViewModel,
@@ -111,8 +108,8 @@ fun NavGraph(
 
         composable(
             route = Routes.FAVORITE,
-            enterTransition = { if (initialState.destination.isCurrent(Routes.BOOK_INFO)) enterRight else enterVertical },
-            exitTransition = { if (targetState.destination.isCurrent(Routes.BOOK_INFO)) exitLeft else exitVertical },
+            enterTransition = { if (initialState.destination.isCurrent(Routes.BOOK_INFO)) enterRight else enterByBottomNav },
+            exitTransition = { if (targetState.destination.isCurrent(Routes.BOOK_INFO)) exitLeft else exitByBottomNav },
         ) {
             FavoriteScreen(
                 bookViewModel = bookViewModel,
@@ -136,5 +133,4 @@ fun NavGraph(
             )
         }
     }
-
 }
