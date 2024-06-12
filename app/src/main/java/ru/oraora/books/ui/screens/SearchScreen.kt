@@ -285,7 +285,7 @@ fun SearchBookGrid(
                 }
             }
 
-            items(books) { book ->
+            items(books, key = { it.id }) { book ->
                 BookCard(
                     book = book,
                     isBookmarked = favoriteBooks.any { it.id == book.id },

@@ -415,7 +415,6 @@ fun OSearchBar(
 
                         AnimatedVisibility(
                             visible = isVisible,
-                            enter = expandVertically(),
                             exit = fadeOut() + shrinkVertically()
                         ) {
                             HistoryItem(
