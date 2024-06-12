@@ -101,6 +101,7 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.oraora.books.ui.LocalSearchRequester
@@ -368,79 +369,75 @@ fun OSearchBar(
                 modifier = Modifier.padding(top = topPadding.value * animationProgress.value)
             )
 
-            val showHistory by remember {
-                derivedStateOf(structuralEqualityPolicy()) { animationProgress.value > 0 }
-            }
-
             var imeBottomPadding =
                 WindowInsets.ime.asPaddingValues().calculateBottomPadding() - 80.dp + 24.dp
             if (imeBottomPadding < 0.dp) {
                 imeBottomPadding = 0.dp
             }
 
-            if (showHistory) {
-                Column(
-                    Modifier
+            if (active) {
+                HorizontalDivider(color = colors.dividerColor)
+                AnimatedVisibility(
+                    visible = searchHistory.isNotEmpty(),
+                    enter = expandVertically(),
+                    exit = shrinkVertically() + fadeOut()
+
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "ВЫ НЕДАВНО ИСКАЛИ",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "Очистить",
+                            color = Color.Red,
+                            modifier = Modifier
+                                .padding(start = 4.dp, end = 16.dp)
+                                .clickable {
+                                    clearHistory()
+                                }
+                        )
+                    }
+                }
+                LazyColumn(
+                    modifier = Modifier
                         .padding(bottom = imeBottomPadding)
                 ) {
-                    HorizontalDivider(color = colors.dividerColor)
-                    AnimatedVisibility(
-                        visible = searchHistory.isNotEmpty(),
-                        enter = expandVertically(),
-                        exit = shrinkVertically() + fadeOut()
+                    items(searchHistory, key = { it }) {
+                        var isVisible by remember { mutableStateOf(true) }
 
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(vertical = 6.dp)
+                        AnimatedVisibility(
+                            visible = isVisible,
+                            enter = expandVertically(),
+                            exit = fadeOut() + shrinkVertically()
                         ) {
-                            Text(
-                                text = "ВЫ НЕДАВНО ИСКАЛИ",
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier
-                                    .padding(start = 16.dp)
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = "Очистить",
-                                color = Color.Red,
-                                modifier = Modifier
-                                    .padding(start = 4.dp, end = 16.dp)
-                                    .clickable {
-                                        clearHistory()
-                                    }
-
-                            )
-                        }
-                    }
-                    LazyColumn {
-                        items(searchHistory, key = { it }) {
-                            var isVisible by remember { mutableStateOf(true) }
-
-                            AnimatedVisibility(
-                                visible = isVisible,
-                                enter = expandVertically(),
-                                exit = fadeOut() + shrinkVertically()
-                            ) {
-                                HistoryItem(
-                                    history = it,
-                                    onItemClick = {
+                            HistoryItem(
+                                history = it,
+                                onItemClick = {
+                                    searchScope.launch {
+                                        delay(100)
                                         onActiveChange(false)
                                         keyboardController?.hide()
                                         onQueryChange(TextFieldValue(text = it))
                                         onSearch()
-                                    },
-                                    removeHistory = { bookId ->
-                                        isVisible = false
-                                        searchScope.launch {
-                                            // Duration of the fadeOut animation
-                                            delay(300)
-                                            removeHistory(bookId)
-                                        }
-                                    },
-                                )
-                            }
+                                    }
+                                },
+                                removeHistory = { bookId ->
+                                    isVisible = false
+                                    searchScope.launch {
+                                        // Duration of the fadeOut animation
+                                        delay(300)
+                                        removeHistory(bookId)
+                                    }
+                                },
+                            )
                         }
                     }
                 }
