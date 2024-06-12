@@ -7,7 +7,7 @@ sealed interface SearchState {
 
     object FirstEnter : SearchState
     object Loading : SearchState
-    object Refreshing : SearchState
+//    object Refreshing : SearchState
     object Success : SearchState
 //    data class Success(val books: List<Book>) : SearchState
     object Error : SearchState
@@ -26,6 +26,7 @@ data class BookUiState(
     val lastQuery: TextFieldValue = TextFieldValue(""),
     val isSearchActive: Boolean = false,
     val searchState: SearchState = SearchState.FirstEnter,
+    val isSearchRefresh: Boolean = false,
     val selectedBook: Book? = null,
     val isShowingBookPage: Boolean = false,
     val searchColumnsCount: Int = 2,

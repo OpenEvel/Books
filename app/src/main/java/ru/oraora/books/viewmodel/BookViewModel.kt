@@ -65,28 +65,19 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         }
     }
 
-   fun clearFavorite() {
+    fun clearFavorite() {
         viewModelScope.launch {
             _favoriteBooks.clear()
         }
     }
 
     fun loadBooks() {
-        getBooks(SearchState.Loading)
-    }
-
-    fun refreshBooks() {
-        getBooks(SearchState.Refreshing)
-    }
-
-
-    private fun getBooks(state: SearchState) {
         viewModelScope.launch {
             // Ставим состояние, что мы загружаем информацию
             // а также сохраняем последний запрос
             _uiState.update {
                 it.copy(
-                    searchState = state,
+                    searchState = SearchState.Loading,
                     lastQuery = it.query
                 )
             }
@@ -113,6 +104,50 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
             _uiState.update {
                 it.copy(
                     searchState = resState
+                )
+            }
+        }
+    }
+
+    fun refreshBooks() {
+        viewModelScope.launch {
+            // Ставим состояние, что мы обновляем информацию
+            _uiState.update {
+                it.copy(
+                    isSearchRefresh = true,
+                )
+            }
+
+            var newBooks: List<Book> = emptyList()
+
+
+            // Если в процессе загрузки возникает ошибка то показываем экран ошибки
+            val resState = try {
+                // Загружаем данные с сервера
+                newBooks = bookRepository.getBooks(_uiState.value.query.text)
+                SearchState.Success
+            } catch (e: IOException) {
+                SearchState.Error
+            } catch (e: HttpException) {
+                SearchState.Error
+            }
+
+            if (resState is SearchState.Success) {
+                _searchingBooks.clear()
+                _searchingBooks.addAll(newBooks)
+            }
+
+            // Данные загружены, убираем инжикатор обновления
+            _uiState.update {
+                it.copy(
+                    isSearchRefresh = false,
+                )
+            }
+
+            // Показываем нужный экран
+            _uiState.update {
+                it.copy(
+                    searchState = resState,
                 )
             }
         }

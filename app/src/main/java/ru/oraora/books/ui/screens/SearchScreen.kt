@@ -25,6 +25,8 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
@@ -83,7 +85,7 @@ fun SearchScreen(
     val scrollScope = rememberCoroutineScope()
 
     val pullRefreshState = rememberPullRefreshState(
-        refreshing = uiState.searchState is SearchState.Refreshing,
+        refreshing = uiState.isSearchRefresh,
         onRefresh = bookViewModel::refreshBooks
     )
 
@@ -136,7 +138,7 @@ fun SearchScreen(
                 is SearchState.FirstEnter -> FirstEnterFrame()
                 is SearchState.Loading -> LoadingFrame()
                 is SearchState.Error -> ErrorFrame(retryAction = bookViewModel::loadBooks)
-                else -> {
+                is SearchState.Success -> {
                     SearchBookGrid(
                         books = bookViewModel.searchingBooks,
                         columnsCount = uiState.searchColumnsCount,
@@ -154,17 +156,18 @@ fun SearchScreen(
                         topHeight = OSearchBarDefaults.topHeight + WindowInsets.statusBars.asPaddingValues()
                             .calculateTopPadding()
                     )
-                    PullRefreshIndicator(
-                        refreshing = uiState.searchState is SearchState.Refreshing,
-                        state = pullRefreshState,
-                        modifier = Modifier
-                            .padding(top = OSearchBarDefaults.topHeight + WindowInsets.statusBars.asPaddingValues()
-                                .calculateTopPadding())
-                            .align(Alignment.TopCenter)
-                            .zIndex(2f),
-                    )
                 }
             }
+
+            PullRefreshIndicator(
+                refreshing = uiState.isSearchRefresh,
+                state = pullRefreshState,
+                modifier = Modifier
+                    .padding(top = OSearchBarDefaults.topHeight + WindowInsets.statusBars.asPaddingValues()
+                        .calculateTopPadding())
+                    .align(Alignment.TopCenter)
+                    .zIndex(2f),
+            )
         }
     }
 }
@@ -226,7 +229,8 @@ fun ErrorFrame(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
