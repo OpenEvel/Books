@@ -3,18 +3,22 @@ package ru.oraora.books.ui.navigation
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Bookmarks
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -23,6 +27,9 @@ import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import ru.oraora.books.R
 import ru.oraora.books.viewmodel.Routes
+
+import androidx.compose.ui.Alignment
+
 
 @Composable
 fun BottomNavigationBar(
@@ -50,11 +57,11 @@ fun BottomNavigationBar(
         exit = fadeOut(),
     ) {
 
+        val colorScheme = MaterialTheme.colorScheme
 
-        Column {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.37f))
+        Box {
             NavigationBar(
-                tonalElevation = 0.dp
+                tonalElevation = 0.dp,
             ) {
 
                 NavigationBarItem(
@@ -99,6 +106,25 @@ fun BottomNavigationBar(
                     }
                 )
             }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .align(Alignment.TopCenter)
+                    .drawBehind {
+                        val brush = Brush.verticalGradient(
+                            colors = listOf(
+                                colorScheme.onBackground.copy(alpha = 0.05f),
+                                colorScheme.background
+                            )
+                        )
+                        drawRect(
+                            brush = brush,
+                            size = size
+                        )
+                    }
+            )
         }
     }
 }
