@@ -17,7 +17,7 @@ import java.math.BigInteger
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.javaType
 
-class OgsonUniversalAdapter : JsonDeserializer<Any?> {
+class OGsonUniversalAdapter : JsonDeserializer<Any?> {
 
     @OptIn(ExperimentalStdlibApi::class)
     @RequiresApi(Build.VERSION_CODES.O)
