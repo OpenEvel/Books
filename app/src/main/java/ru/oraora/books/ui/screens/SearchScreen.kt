@@ -48,7 +48,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -57,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
@@ -77,7 +80,9 @@ fun SearchScreen(
     scrollState: LazyGridState = rememberLazyGridState(),
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
-    val scrollScope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     val pullRefreshState = rememberPullRefreshState(
         refreshing = uiState.isSearchRefresh,
@@ -110,11 +115,20 @@ fun SearchScreen(
                 lastQuery = uiState.lastQuery,
                 onQueryChange = bookViewModel::onQueryChange,
                 onSearch = {
-                    scrollScope.launch { scrollState.scrollToItem(0, 0) }
+                    coroutineScope.launch { scrollState.scrollToItem(0, 0) }
                     bookViewModel.loadBooks()
                 },
                 active = uiState.isSearchActive,
-                onActiveChange = bookViewModel::onSearchActiveChange,
+                onActiveChange = { active, timeStop ->
+                    coroutineScope.launch {
+                        delay(timeStop)
+                        bookViewModel.onSearchActiveChange(active)
+                        if (!active) {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        }
+                    }
+                },
                 animationProgress = OSearchBarDefaults.animationProgress(active = uiState.isSearchActive),
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = { Icon(Icons.Default.Cancel, contentDescription = "Cancel icon") },
@@ -158,8 +172,11 @@ fun SearchScreen(
                 refreshing = uiState.isSearchRefresh,
                 state = pullRefreshState,
                 modifier = Modifier
-                    .padding(top = OSearchBarDefaults.topHeight + WindowInsets.statusBars.asPaddingValues()
-                        .calculateTopPadding())
+                    .padding(
+                        top = OSearchBarDefaults.topHeight + WindowInsets.statusBars
+                            .asPaddingValues()
+                            .calculateTopPadding()
+                    )
                     .align(Alignment.TopCenter)
                     .zIndex(2f),
             )
@@ -301,7 +318,6 @@ fun SearchBookGrid(
                     )
                 }
             }
-
         }
     }
 }

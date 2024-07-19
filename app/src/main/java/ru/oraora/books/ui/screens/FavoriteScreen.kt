@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -51,7 +53,7 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.ui.screens.obook.BookCardWithBookmark
+import ru.oraora.books.ui.screens.obook.BookImage
 import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.Routes
@@ -171,17 +173,8 @@ fun FavoriteBookGrid(
                     exit = fadeOut() + shrinkVertically(),
                     modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
                 ) {
-                    BookCardWithBookmark(
-                        book = book,
-                        isBookmarked = true,
-                        onRemoveFavorite = {
-                            isVisible = false
-                            coroutineScope.launch {
-                                // Duration of the fadeOut animation
-//                                delay(300)
-                                onRemoveFavorite(it)
-                            }
-                        },
+                    BookImage(
+                        imageBookLink = book.imageLink,
                         modifier = Modifier
                             .size(cellWidth, cellHeight)
                             .pointerInput(Unit) {
@@ -203,7 +196,6 @@ fun FavoriteBookGrid(
                     )
                 }
             }
-
         }
 
         AnimatedVisibility(
@@ -212,7 +204,7 @@ fun FavoriteBookGrid(
             exit = fadeOut(),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(16.dp)
+                .padding(8.dp)
         ) {
             Button(
                 onClick = {
@@ -222,7 +214,15 @@ fun FavoriteBookGrid(
                     showDeleteOptions = false
                 },
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete all")
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete all")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Удалить все")
+                }
+
             }
         }
     }

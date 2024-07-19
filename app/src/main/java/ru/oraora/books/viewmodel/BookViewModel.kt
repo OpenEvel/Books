@@ -34,42 +34,46 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     private val _favoriteBooks = mutableStateListOf<Book>()
     val favoriteBooks: List<Book> get() = Collections.unmodifiableList(_favoriteBooks)
 
-    fun addHistory(query: String) {
+    fun addHistory(query: String, timeStop: Long = 0) {
         viewModelScope.launch {
+            delay(timeStop)
             if (query.trim().isNotEmpty() && query !in _searchHistory) {
                 _searchHistory.add(0, query)
             }
         }
     }
 
-    fun removeHistory(history: String) {
+    fun removeHistory(history: String, timeStop: Long = 0) {
         viewModelScope.launch {
+            delay(timeStop)
             _searchHistory.remove(history)
         }
     }
 
-    fun clearHistory() {
+    fun clearHistory(timeStop: Long = 0) {
         viewModelScope.launch {
+            delay(timeStop)
             _searchHistory.clear()
         }
     }
 
-    fun addFavorite(book: Book) {
+    fun addFavorite(book: Book, timeStop: Long = 0) {
         viewModelScope.launch {
+            delay(timeStop)
             _favoriteBooks.add(0, book)
         }
     }
 
-    fun removeFavorite(bookId: String) {
+    fun removeFavorite(bookId: String, timeStop: Long = 0) {
         viewModelScope.launch {
-            delay(300)
+            delay(timeStop)
             _favoriteBooks.removeIf { it.id == bookId }
         }
     }
 
-    fun clearFavorite() {
+    fun clearFavorite(timeStop: Long = 0) {
         viewModelScope.launch {
-            delay(300)
+            delay(timeStop)
             _favoriteBooks.clear()
         }
     }
@@ -86,7 +90,6 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
             }
 
             var newBooks: List<Book> = emptyList()
-
 
             val resState = try {
                 newBooks = bookRepository.getBooks(_uiState.value.query.text)
@@ -168,7 +171,6 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
-//                    query = TextFieldValue(newQuery.text, selection = newQuery.selection)
                     query = newQuery
                 )
             }
@@ -206,6 +208,4 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
             }
         }
     }
-
 }
-
