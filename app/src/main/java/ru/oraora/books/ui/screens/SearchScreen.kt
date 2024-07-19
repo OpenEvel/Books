@@ -60,7 +60,7 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.ui.screens.obook.BookCard
+import ru.oraora.books.ui.screens.obook.BookCardWithBookmark
 import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults
 import ru.oraora.books.ui.screens.osearch.TopSearchBar
 import ru.oraora.books.viewmodel.BookUiState
@@ -281,7 +281,7 @@ fun SearchBookGrid(
             }
 
             items(books, key = { it.id }) { book ->
-                BookCard(
+                BookCardWithBookmark(
                     book = book,
                     isBookmarked = favoriteBooks.any { it.id == book.id },
                     onAddFavorite = onAddFavorite,

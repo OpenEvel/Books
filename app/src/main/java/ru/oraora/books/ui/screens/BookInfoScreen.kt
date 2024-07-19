@@ -52,7 +52,7 @@ fun BookInfo(
     val backgroundHeight = topHeight + 320.dp
 
     BookImage(
-        imageLink = book.imageLink,
+        imageBookLink = book.imageLink,
         modifier = Modifier
             .fillMaxWidth()
             .height(backgroundHeight)
@@ -67,7 +67,7 @@ fun BookInfo(
         Spacer(modifier = Modifier.height(topHeight))
 
         BookImage(
-            imageLink = book.imageLink,
+            imageBookLink = book.imageLink,
             modifier = Modifier
                 .size(200.dp, 300.dp)
                 .shadow(10.dp)

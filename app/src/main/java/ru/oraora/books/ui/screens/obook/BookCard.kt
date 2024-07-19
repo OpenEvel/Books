@@ -31,11 +31,15 @@ import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
 import ru.oraora.books.ui.screens.shimmer.Shimmer
 import androidx.compose.runtime.remember
+import ru.oraora.books.ui.theme.BookCardShades
 
 @Composable
-fun BookImage(
+fun NetworkImage(
     imageLink: String?,
-    modifier: Modifier = Modifier,
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
+    onLoad: @Composable (() -> Unit)? = null,
+    onError: @Composable (() -> Unit)? = null,
+    content: @Composable (() -> Unit)? = null,
 ) {
     SubcomposeAsyncImage(
         model = ImageRequest.Builder(context = LocalContext.current)
@@ -44,89 +48,88 @@ fun BookImage(
             .build(),
         contentDescription = null,
         contentScale = ContentScale.Crop,
-        loading = {
+        modifier = modifier,
+    ) {
+
+        if (painter.state is AsyncImagePainter.State.Loading) {
+            onLoad?.let { it() }
+        } else {
+            if (painter.state is AsyncImagePainter.State.Error) {
+                onError?.let { it() }
+            } else {
+                SubcomposeAsyncImageContent()
+            }
+
+            content?.let { it() }
+        }
+    }
+}
+
+@Composable
+fun BookImage(
+    imageBookLink: String?,
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
+    content: @Composable (() -> Unit)? = null,
+) {
+    NetworkImage(
+        imageLink = imageBookLink,
+        modifier = modifier,
+        onLoad = {
             Shimmer(modifier = Modifier.fillMaxSize())
         },
-        error = {
+        onError = {
             Image(
                 painter = painterResource(R.drawable.ic_broken_image),
-                contentDescription = null
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize()
             )
         },
-        modifier = modifier,
+        content = content
     )
 }
 
 @Composable
-fun BookCard(
+fun BookCardWithBookmark(
     book: Book,
     isBookmarked: Boolean,
     onAddFavorite: (Book) -> Unit = {},
     onRemoveFavorite: (String) -> Unit = {},
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
-    SubcomposeAsyncImage(
-        model = ImageRequest.Builder(context = LocalContext.current)
-            .data(book.imageLink)
-            .crossfade(true)
-            .build(),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
+    BookImage(
+        imageBookLink = book.imageLink,
         modifier = modifier,
     ) {
-
-        if (painter.state is AsyncImagePainter.State.Loading) {
-            Shimmer(modifier = Modifier.fillMaxSize())
-        } else {
-            if (painter.state is AsyncImagePainter.State.Error) {
-                Image(
-                    painter = painterResource(R.drawable.ic_broken_image),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                SubcomposeAsyncImageContent()
-            }
-
-            val colorStops = arrayOf(
-                0.0f to Color.Transparent,
-                0.6f to Color.Transparent,
-                0.7f to Color.Black.copy(0.02f),
-                0.8f to Color.Black.copy(0.06f),
-                1f to Color.Black.copy(0.1f)
-            )
-
-            Box(
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.linearGradient(
+                        start = Offset(0f, Float.POSITIVE_INFINITY),
+                        end = Offset(Float.POSITIVE_INFINITY, 0f),
+                        colorStops = BookCardShades,
+                    )
+                ),
+            contentAlignment = Alignment.TopEnd
+        ) {
+            Icon(
+                imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                contentDescription = null,
+                tint = Color.White,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.linearGradient(
-                            start = Offset(0f, Float.POSITIVE_INFINITY),
-                            end = Offset(Float.POSITIVE_INFINITY, 0f),
-                            colorStops = colorStops,
-                        )
-                    ),
-                contentAlignment = Alignment.TopEnd
-            ) {
-                Icon(
-                    imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .size(28.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            if (isBookmarked) {
-                                onRemoveFavorite(book.id)
-                            } else {
-                                onAddFavorite(book)
-                            }
+                    .padding(8.dp)
+                    .size(28.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        if (isBookmarked) {
+                            onRemoveFavorite(book.id)
+                        } else {
+                            onAddFavorite(book)
                         }
-                )
-            }
+                    }
+            )
         }
     }
 }

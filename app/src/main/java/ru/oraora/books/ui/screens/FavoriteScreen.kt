@@ -51,7 +51,7 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.ui.screens.obook.BookCard
+import ru.oraora.books.ui.screens.obook.BookCardWithBookmark
 import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.Routes
@@ -171,7 +171,7 @@ fun FavoriteBookGrid(
                     exit = fadeOut() + shrinkVertically(),
                     modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
                 ) {
-                    BookCard(
+                    BookCardWithBookmark(
                         book = book,
                         isBookmarked = true,
                         onRemoveFavorite = {

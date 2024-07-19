@@ -15,3 +15,13 @@ val ShimmerColorShades = listOf(
     Color.LightGray.copy(0.1f),
     Color.LightGray.copy(0.4f)
 )
+
+// Цвета для градиента обложки,
+// чтобы на любой картинке была видна иконка закладка
+val BookCardShades = arrayOf(
+    0.0f to Color.Transparent,
+    0.6f to Color.Transparent,
+    0.7f to Color.Black.copy(0.02f),
+    0.8f to Color.Black.copy(0.06f),
+    1f to Color.Black.copy(0.1f)
+)
