@@ -2,10 +2,11 @@ package ru.oraora.books.ui.screens
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,10 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -43,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.oraora.books.data.models.Book
 import ru.oraora.books.ui.screens.obook.BookCard
@@ -91,26 +96,22 @@ fun FavoriteScreen(
                     .wrapContentSize(Alignment.Center)
             )
         }
-
-        Box(
+        FavoriteBookGrid(
+            favoriteBooks = bookViewModel.favoriteBooks,
+            columnsCount = uiState.searchColumnsCount,
+            onBookSelect = { book ->
+                bookViewModel.changeSelectedBook(book)
+                navController.navigate(Routes.BOOK_INFO) {
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+            scrollState = scrollState,
+            onRemoveFavorite = bookViewModel::removeFavorite,
+            onRemoveAllFavorite = bookViewModel::clearFavorite,
+            topHeight = topBarHeight + 56.dp,
             modifier = Modifier.fillMaxSize()
-        ) {
-            FavoriteBookGrid(
-                favoriteBooks = bookViewModel.favoriteBooks,
-                columnsCount = uiState.searchColumnsCount,
-                onBookSelect = { book ->
-                    bookViewModel.changeSelectedBook(book)
-                    navController.navigate(Routes.BOOK_INFO) {
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                scrollState = scrollState,
-                onRemoveFavorite = bookViewModel::removeFavorite,
-                topHeight = topBarHeight + 56.dp
-            )
-
-        }
+        )
     }
 }
 
@@ -123,12 +124,21 @@ fun FavoriteBookGrid(
     scrollState: LazyGridState = rememberLazyGridState(),
     topHeight: Dp = 0.dp,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
+    onRemoveAllFavorite: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    Box(
-        modifier = modifier.fillMaxWidth()
-    ) {
+    var showDeleteOptions by remember { mutableStateOf(false) }
 
+    Box(modifier = modifier
+        .fillMaxSize()
+        .pointerInput(Unit) {
+            detectTapGestures(
+                onLongPress = {
+                    showDeleteOptions = true
+                }
+            )
+        }
+    ) {
         val cellWidth =
             (LocalConfiguration.current.screenWidthDp.dp - 16.dp - 8.dp - 16.dp) / columnsCount
         val cellHeight = 1.5 * cellWidth
@@ -168,14 +178,19 @@ fun FavoriteBookGrid(
                             isVisible = false
                             coroutineScope.launch {
                                 // Duration of the fadeOut animation
-                                delay(300)
+//                                delay(300)
                                 onRemoveFavorite(it)
                             }
                         },
                         modifier = Modifier
                             .size(cellWidth, cellHeight)
-                            .clickable {
-                                onBookSelect(book)
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onTap = { onBookSelect(book) },
+                                    onLongPress = {
+                                        showDeleteOptions = true
+                                    }
+                                )
                             }
                     )
                 }
@@ -189,6 +204,26 @@ fun FavoriteBookGrid(
                 }
             }
 
+        }
+
+        AnimatedVisibility(
+            visible = showDeleteOptions,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        onRemoveAllFavorite()
+                    }
+                    showDeleteOptions = false
+                },
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete all")
+            }
         }
     }
 }

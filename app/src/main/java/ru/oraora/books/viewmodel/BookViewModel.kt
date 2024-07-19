@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -61,12 +62,14 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
 
     fun removeFavorite(bookId: String) {
         viewModelScope.launch {
+            delay(300)
             _favoriteBooks.removeIf { it.id == bookId }
         }
     }
 
     fun clearFavorite() {
         viewModelScope.launch {
+            delay(300)
             _favoriteBooks.clear()
         }
     }

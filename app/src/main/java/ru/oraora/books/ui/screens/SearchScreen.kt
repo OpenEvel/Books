@@ -37,7 +37,6 @@ import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -47,9 +46,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.takeOrElse
-import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -63,9 +60,7 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.ui.LocalSearchRequester
 import ru.oraora.books.ui.screens.obook.BookCard
-import ru.oraora.books.ui.screens.osearch.OSearchBar
 import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults
 import ru.oraora.books.ui.screens.osearch.TopSearchBar
 import ru.oraora.books.viewmodel.BookUiState
@@ -73,7 +68,7 @@ import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.Routes
 import ru.oraora.books.viewmodel.SearchState
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SearchScreen(
     bookViewModel: BookViewModel,

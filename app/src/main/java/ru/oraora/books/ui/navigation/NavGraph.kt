@@ -1,6 +1,5 @@
 package ru.oraora.books.ui.navigation
 
-import androidx.compose.animation.core.EaseInOutExpo
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut

@@ -37,10 +37,9 @@ class OGsonUniversalAdapter : JsonDeserializer<Any?> {
                             BigInteger::class.java -> prim.asBigInteger
                             Float::class.java -> prim.asFloat
                             Double::class.java -> prim.asDouble
-                            BigDecimal::class.java -> prim.asBigDecimal;
+                            BigDecimal::class.java -> prim.asBigDecimal
                             else -> null
                         }
-
                     }
                     else -> null
                 }
