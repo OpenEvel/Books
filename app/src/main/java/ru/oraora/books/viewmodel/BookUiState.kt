@@ -30,4 +30,5 @@ data class BookUiState(
     val selectedBook: Book? = null,
     val isShowingBookPage: Boolean = false,
     val searchColumnsCount: Int = 2,
+    val showDelOptions: Boolean = false,
 )

@@ -197,6 +197,16 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         }
     }
 
+    fun delOptionsChange(isVisible: Boolean) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    showDelOptions = isVisible
+                )
+            }
+        }
+    }
+
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

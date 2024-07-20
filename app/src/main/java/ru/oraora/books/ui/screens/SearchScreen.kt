@@ -63,6 +63,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
+import ru.oraora.books.ui.navigation.isCurrent
 import ru.oraora.books.ui.screens.obook.BookCardWithBookmark
 import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults
 import ru.oraora.books.ui.screens.osearch.TopSearchBar
@@ -80,6 +81,10 @@ fun SearchScreen(
     scrollState: LazyGridState = rememberLazyGridState(),
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
+    if (uiState.showDelOptions) {
+        bookViewModel.delOptionsChange(false)
+    }
+
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
