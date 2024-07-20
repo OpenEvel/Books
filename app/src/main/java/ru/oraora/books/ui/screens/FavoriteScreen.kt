@@ -32,11 +32,15 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -143,7 +147,7 @@ fun FavoriteBookGrid(
     favoriteBooks: List<Book>,
     columnsCount: Int,
     onBookSelect: (Book) -> Unit,
-    onRemoveFavorite: (String) -> Unit = {},
+    onRemoveFavorite: (bookId: String, timeStop: Long) -> Unit,
     showDelOptions: Boolean,
     onDelOptionsChange: (Boolean) -> Unit,
     scrollState: LazyGridState = rememberLazyGridState(),
@@ -177,6 +181,16 @@ fun FavoriteBookGrid(
             label = "",
         )
 
+        val delButtonColor by animateColorAsState(
+            targetValue = if (showDelOptions) Color.White else Color.Transparent,
+            label = "",
+        )
+
+        val delButtonIconColor by animateColorAsState(
+            targetValue = if (showDelOptions) Color.Black else Color.Transparent,
+            label = "",
+        )
+
         LazyVerticalGrid(
             state = scrollState,
             columns = GridCells.Fixed(columnsCount),
@@ -206,7 +220,7 @@ fun FavoriteBookGrid(
                     modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
                 ) {
                     Box(
-                        contentAlignment = Alignment.Center,
+                        contentAlignment = Alignment.TopEnd,
                         modifier = Modifier
                             .size(cellWidth, cellHeight)
                             .border(
@@ -229,6 +243,41 @@ fun FavoriteBookGrid(
                                     )
                                 }
                         )
+
+                        AnimatedVisibility(
+                            visible = showDelOptions,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .size(24.dp)
+                                .background(color = delButtonColor, shape = CircleShape)
+                                .border(
+                                    width = 0.5.dp,
+                                    color = delButtonIconColor,
+                                    shape = CircleShape
+                                )
+
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    isVisible = false
+                                    onRemoveFavorite(book.id, 300)
+                                    if (favoriteBooks.size - 1 == 0 && showDelOptions) {
+                                        onDelOptionsChange(false)
+                                    }
+                                },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = null,
+                                    tint = delButtonIconColor,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(2.dp),
+                                )
+                            }
+                        }
                     }
                 }
             }
