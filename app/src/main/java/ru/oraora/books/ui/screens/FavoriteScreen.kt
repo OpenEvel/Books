@@ -5,17 +5,15 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -25,20 +23,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
@@ -48,27 +40,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.launch
+import org.burnoutcrew.reorderable.ItemPosition
+import org.burnoutcrew.reorderable.ReorderableItem
+import org.burnoutcrew.reorderable.detectReorderAfterLongPress
+import org.burnoutcrew.reorderable.rememberReorderableLazyGridState
+import org.burnoutcrew.reorderable.reorderable
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.ui.navigation.isCurrent
 import ru.oraora.books.ui.screens.obook.BookImage
-import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults
-import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults.AnimationEnterFloatSpec
-import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults.AnimationExitFloatSpec
 import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.Routes
@@ -78,7 +68,6 @@ fun FavoriteScreen(
     bookViewModel: BookViewModel,
     uiState: BookUiState,
     navController: NavHostController,
-    scrollState: LazyGridState = rememberLazyGridState(),
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
 
@@ -94,13 +83,12 @@ fun FavoriteScreen(
         .asPaddingValues()
         .calculateTopPadding()
 
-    Box(
+    Column(
         modifier = modifier
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .zIndex(1f)
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background)
         ) {
@@ -121,6 +109,7 @@ fun FavoriteScreen(
                     .wrapContentSize(Alignment.Center)
             )
         }
+
         FavoriteBookGrid(
             favoriteBooks = bookViewModel.favoriteBooks,
             columnsCount = uiState.searchColumnsCount,
@@ -131,12 +120,11 @@ fun FavoriteScreen(
                     restoreState = true
                 }
             },
-            scrollState = scrollState,
             onRemoveFavorite = bookViewModel::removeFavorite,
+            onMoveFavorite = bookViewModel::moveFavorite,
             onRemoveAllFavorite = bookViewModel::clearFavorite,
             showDelOptions = uiState.showDelOptions,
             onDelOptionsChange = bookViewModel::delOptionsChange,
-            topHeight = topBarHeight + 56.dp,
             modifier = Modifier.fillMaxSize()
         )
     }
@@ -148,14 +136,22 @@ fun FavoriteBookGrid(
     columnsCount: Int,
     onBookSelect: (Book) -> Unit,
     onRemoveFavorite: (bookId: String, timeStop: Long) -> Unit,
+    onMoveFavorite: (from: ItemPosition, to: ItemPosition) -> Unit,
     showDelOptions: Boolean,
     onDelOptionsChange: (Boolean) -> Unit,
-    scrollState: LazyGridState = rememberLazyGridState(),
-    topHeight: Dp = 0.dp,
+    onRemoveAllFavorite: (start: Int, end: Int, timeStop: Long) -> Unit,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
-    onRemoveAllFavorite: () -> Unit,
 ) {
-    val coroutineScope = rememberCoroutineScope()
+    val state = rememberReorderableLazyGridState(onMove = onMoveFavorite)
+    val detectModifier = if (showDelOptions) {
+        Modifier.detectReorderAfterLongPress(state)
+    } else {
+        Modifier
+    }
+
+    val cellWidth =
+        (LocalConfiguration.current.screenWidthDp.dp - 16.dp - 8.dp - 16.dp) / columnsCount
+    val cellHeight = 1.5 * cellWidth
 
     Box(modifier = modifier
         .fillMaxSize()
@@ -167,155 +163,144 @@ fun FavoriteBookGrid(
             )
         }
     ) {
-        val cellWidth =
-            (LocalConfiguration.current.screenWidthDp.dp - 16.dp - 8.dp - 16.dp) / columnsCount
-        val cellHeight = 1.5 * cellWidth
-
-        val borderColor by animateColorAsState(
-            targetValue = if (showDelOptions) MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f) else Color.Transparent,
-            label = "",
-        )
-
-        val cardOnDeletePadding by animateDpAsState(
-            targetValue = if (showDelOptions) 24.dp else 0.dp,
-            label = "",
-        )
-
-        val delButtonColor by animateColorAsState(
-            targetValue = if (showDelOptions) Color.White else Color.Transparent,
-            label = "",
-        )
-
-        val delButtonIconColor by animateColorAsState(
-            targetValue = if (showDelOptions) Color.Black else Color.Transparent,
-            label = "",
-        )
-
         LazyVerticalGrid(
-            state = scrollState,
+            state = state.gridState,
             columns = GridCells.Fixed(columnsCount),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(horizontal = 16.dp)
-
+                .reorderable(state)
         ) {
-
-            if (topHeight > 0.dp) {
-                items(columnsCount) {
-                    Spacer(
-                        modifier = Modifier.height(topHeight - 8.dp)
-                    )
+            itemsIndexed(favoriteBooks, key = { _, book -> book.id }) { index, book ->
+                val firstLineModifier = if (index < columnsCount) {
+                    Modifier.padding(top = 8.dp)
+                } else {
+                    Modifier
                 }
-            }
 
-            items(favoriteBooks, key = { it.id }) { book ->
+                val cntCardOnLastLine = columnsCount - favoriteBooks.size % columnsCount
+                val lastLineModifier =
+                    if (index > favoriteBooks.lastIndex - cntCardOnLastLine) {
+                        Modifier.padding(bottom = 8.dp)
+                    } else {
+                        Modifier
+                    }
+                val borderColor by animateColorAsState(
+                    targetValue = if (!showDelOptions) {
+                        Color.Transparent
+                    } else {
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
+                    }, label = ""
+                )
 
-                var isVisible by remember { mutableStateOf(true) }
+                Box(
+                    modifier = Modifier
+                        .then(firstLineModifier)
+                        .then(lastLineModifier)
+                        .size(cellWidth, cellHeight)
+                        .border(
+                            width = 0.5.dp,
+                            color = borderColor,
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                )
 
-                AnimatedVisibility(
-                    visible = isVisible,
-                    exit = fadeOut() + shrinkVertically(),
-                    modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.TopEnd,
-                        modifier = Modifier
-                            .size(cellWidth, cellHeight)
-                            .border(
-                                width = 2.dp,
-                                color = borderColor,
-                                shape = RoundedCornerShape(16.dp)
-                            )
+                ReorderableItem(state, key = book.id) { isDragging ->
+
+                    val cardPadding by animateDpAsState(
+                        if (!showDelOptions) {
+                            0.dp
+                        } else if (isDragging) {
+                            12.dp
+                        } else {
+                            24.dp
+                        },
+                        label = ""
+                    )
+
+                    val delButtonPadding by animateDpAsState(
+                        if (isDragging) {
+                            0.dp
+                        } else {
+                            12.dp
+                        },
+                        label = ""
+                    )
+
+                    val elevation by animateDpAsState(
+                        if (isDragging) 8.dp else 2.dp,
+                        label = ""
+                    )
+
+                    var isVisible by remember { mutableStateOf(true) }
+
+                    AnimatedVisibility(
+                        visible = isVisible,
+                        exit = fadeOut() + scaleOut(),
                     ) {
-                        BookImage(
-                            imageBookLink = book.imageLink,
+                        Box(
+                            contentAlignment = Alignment.TopEnd,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(cardOnDeletePadding)
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onTap = { onBookSelect(book) },
-                                        onLongPress = {
-                                            onDelOptionsChange(true)
+                                .then(detectModifier)
+                                .then(firstLineModifier)
+                                .then(lastLineModifier)
+                                .size(cellWidth, cellHeight)
+                        ) {
+                            BookImage(
+                                imageBookLink = book.imageLink,
+                                modifier = Modifier
+                                    .padding(cardPadding)
+                                    .fillMaxSize()
+                                    .then(
+                                        if (!showDelOptions) {
+                                            Modifier.pointerInput(Unit) {
+                                                detectTapGestures(
+                                                    onTap = { onBookSelect(book) },
+                                                    onLongPress = {
+                                                        onDelOptionsChange(true)
+                                                        val start = state.gridState.firstVisibleItemIndex
+                                                        val end = state.gridState.layoutInfo.visibleItemsInfo.lastIndex
+//                                                        onRemoveAllFavorite(start, end, 300)
+                                                    }
+                                                )
+                                            }
+                                        } else {
+                                            Modifier
                                         }
+                                    ),
+                                onFinishModifier = Modifier
+                                    .shadow(elevation)
+                            )
+
+                            AnimatedVisibility(
+                                visible = showDelOptions && !isDragging,
+                                enter = scaleIn(),
+                                exit = scaleOut(),
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        isVisible = false
+                                        onRemoveFavorite(book.id, 300)
+                                    },
+                                    modifier = Modifier
+                                        .padding(delButtonPadding)
+                                        .size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = null,
+                                        tint = Color.Black,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(color = Color.White, shape = CircleShape)
                                     )
                                 }
-                        )
-
-                        AnimatedVisibility(
-                            visible = showDelOptions,
-                            enter = fadeIn(),
-                            exit = fadeOut(),
-                            modifier = Modifier
-                                .padding(12.dp)
-                                .size(24.dp)
-                                .background(color = delButtonColor, shape = CircleShape)
-                                .border(
-                                    width = 0.5.dp,
-                                    color = delButtonIconColor,
-                                    shape = CircleShape
-                                )
-
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    isVisible = false
-                                    onRemoveFavorite(book.id, 300)
-                                    if (favoriteBooks.size - 1 == 0 && showDelOptions) {
-                                        onDelOptionsChange(false)
-                                    }
-                                },
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = null,
-                                    tint = delButtonIconColor,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(2.dp),
-                                )
                             }
                         }
                     }
                 }
-            }
-
-            if (favoriteBooks.isNotEmpty()) {
-                items(columnsCount) {
-                    Spacer(
-                        modifier = Modifier.height(5.dp)
-                    )
-                }
-            }
-        }
-
-        AnimatedVisibility(
-            visible = showDelOptions,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(8.dp)
-        ) {
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        onRemoveAllFavorite()
-                    }
-                    onDelOptionsChange(false)
-                },
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete all")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Удалить все")
-                }
-
             }
         }
     }

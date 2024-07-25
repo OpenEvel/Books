@@ -5,7 +5,8 @@ junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 activityCompose = "1.9.0"
-coilCompose = "2.6.0"
+coilCompose = "2.7.0"
+reorderable = "0.9.6"
 uiToolingPreview = "1.7.0-beta05"
 navigationCompose = "2.7.7"
 animation = "1.7.0-beta05"
@@ -26,6 +27,7 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version = "1.7.0-beta05" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", version.ref = "reorderable" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version = "2.11.0" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version = "5.0.0-alpha.14" }
 converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version = "2.11.0" }

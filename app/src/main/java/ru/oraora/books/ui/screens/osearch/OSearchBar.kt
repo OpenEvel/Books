@@ -1,6 +1,7 @@
 package ru.oraora.books.ui.screens.osearch
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.ViewTreeObserver
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.CubicBezierEasing
@@ -9,7 +10,10 @@ import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -332,16 +336,17 @@ fun OSearchBar(
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon?.let { trailing ->
                     {
-                        if (active) {
+                        AnimatedVisibility(
+                            visible = active,
+                            enter = scaleIn() + fadeIn(),
+                            exit = scaleOut() + fadeOut()
+                        ) {
                             IconButton(
-                                modifier = Modifier
-                                    .rotate(animationProgress.value * 450)
-                                    .alpha(animationProgress.value),
                                 onClick = {
                                     if (query.text.isNotEmpty()) {
                                         onQueryChange(TextFieldValue(text = ""))
                                     } else {
-                                        onActiveChange(false,0)
+                                        onActiveChange(false, 0)
                                     }
                                 }
                             ) {
@@ -407,8 +412,16 @@ fun OSearchBar(
                             HistoryItem(
                                 history = it,
                                 onItemClick = {
-                                    onActiveChange(false, (OSearchBarDefaults.exitMills / 1.5).toLong())
-                                    onQueryChange(TextFieldValue(text = it, selection = TextRange(it.length)))
+                                    onActiveChange(
+                                        false,
+                                        (OSearchBarDefaults.exitMills / 1.5).toLong()
+                                    )
+                                    onQueryChange(
+                                        TextFieldValue(
+                                            text = it,
+                                            selection = TextRange(it.length)
+                                        )
+                                    )
                                     onSearch()
                                 },
                                 removeHistory = { bookId ->
@@ -500,13 +513,6 @@ fun OSearchBarField(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
-    val isKeyboardVisible by keyboardAsState()
-
-    LaunchedEffect(isKeyboardVisible) {
-        if (!isKeyboardVisible) {
-            onActiveChange(false, 0)
-        }
-    }
 
     val textColor = LocalTextStyle.current.color.takeOrElse {
         colors.textColor

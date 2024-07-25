@@ -19,6 +19,8 @@ import ru.oraora.books.data.models.Book
 import ru.oraora.books.data.repository.BookRepository
 import java.io.IOException
 import java.util.Collections
+import org.burnoutcrew.reorderable.ItemPosition
+
 
 class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
 
@@ -33,6 +35,16 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
 
     private val _favoriteBooks = mutableStateListOf<Book>()
     val favoriteBooks: List<Book> get() = Collections.unmodifiableList(_favoriteBooks)
+
+    fun onReturnChange(isReturn: Boolean) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isReturn = isReturn,
+                )
+            }
+        }
+    }
 
     fun addHistory(query: String, timeStop: Long = 0) {
         viewModelScope.launch {
@@ -71,10 +83,18 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         }
     }
 
-    fun clearFavorite(timeStop: Long = 0) {
+    fun clearFavorite(start: Int = 0, end: Int = 0, timeStop: Long = 0) {
         viewModelScope.launch {
             delay(timeStop)
             _favoriteBooks.clear()
+        }
+    }
+
+    fun moveFavorite(from: ItemPosition, to: ItemPosition) {
+        viewModelScope.launch {
+            _favoriteBooks.apply {
+                add(to.index, removeAt(from.index))
+            }
         }
     }
 
@@ -206,7 +226,6 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
             }
         }
     }
-
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

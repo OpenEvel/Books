@@ -20,8 +20,7 @@ val LocalSearchRequester =
     compositionLocalOf<FocusRequester> { error("No FocusRequester provided") }
 
 @Composable
-fun BookApp() {
-    val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
+fun BookApp(bookViewModel: BookViewModel) {
     val uiState by bookViewModel.uiState.collectAsState()
 
     //Create NavController
