@@ -36,16 +36,6 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     private val _favoriteBooks = mutableStateListOf<Book>()
     val favoriteBooks: List<Book> get() = Collections.unmodifiableList(_favoriteBooks)
 
-    fun onReturnChange(isReturn: Boolean) {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isReturn = isReturn,
-                )
-            }
-        }
-    }
-
     fun addHistory(query: String, timeStop: Long = 0) {
         viewModelScope.launch {
             delay(timeStop)

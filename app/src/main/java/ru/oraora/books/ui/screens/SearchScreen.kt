@@ -2,7 +2,6 @@ package ru.oraora.books.ui.screens
 
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imeAnimationSource
 import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -50,10 +48,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -72,7 +68,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
-import ru.oraora.books.ui.LocalSearchRequester
 import ru.oraora.books.ui.screens.obook.BookCardWithBookmark
 import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults
 import ru.oraora.books.ui.screens.osearch.TopSearchBar
@@ -83,7 +78,6 @@ import ru.oraora.books.viewmodel.SearchState
 
 @OptIn(
     ExperimentalMaterialApi::class, ExperimentalLayoutApi::class,
-    ExperimentalComposeUiApi::class
 )
 @Composable
 fun SearchScreen(
@@ -105,24 +99,15 @@ fun SearchScreen(
 
     // Отслеживание состояния клавиатуры
     val bottomEnd = WindowInsets.imeAnimationTarget.getBottom(LocalDensity.current)
-    LaunchedEffect(bottomEnd, uiState.isReturn) {
-        Log.i("ostate", "botEnd=$bottomEnd, isRet=${uiState.isReturn} active=${uiState.isSearchActive}")
+    LaunchedEffect(bottomEnd) {
         if (bottomEnd == 0) {
             if (uiState.isSearchActive) {
-                if (uiState.isReturn) {
-                    bookViewModel.onSearchActiveChange(true)
-
-                } else {
-                    bookViewModel.onSearchActiveChange(false)
-                    focusManager.clearFocus()
-                    keyboardController?.hide()
-                }
+                bookViewModel.onSearchActiveChange(false)
+                focusManager.clearFocus()
+                keyboardController?.hide()
             }
         }
-        bookViewModel.onReturnChange(false)
     }
-
-
 
 
     Box(

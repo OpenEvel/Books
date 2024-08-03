@@ -41,16 +41,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    override fun onRestart() {
-        super.onRestart()
-        bookViewModel.onReturnChange(true)
-        Log.i("ostate", "restart")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        bookViewModel.onReturnChange(true)
-        Log.i("ostate", "destroy")
-    }
 }
