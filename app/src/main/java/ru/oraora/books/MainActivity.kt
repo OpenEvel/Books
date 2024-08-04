@@ -22,13 +22,8 @@ import ru.oraora.books.ui.theme.BooksTheme
 import ru.oraora.books.viewmodel.BookViewModel
 
 class MainActivity : ComponentActivity() {
-    private lateinit var bookViewModel: BookViewModel
-    @OptIn(ExperimentalLayoutApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        bookViewModel = ViewModelProvider(this, BookViewModel.Factory)[BookViewModel::class.java]
-
-        Log.i("ostate", "create")
         setContent {
             BooksTheme {
                 // A surface container using the 'background' color from the theme
@@ -36,7 +31,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    BookApp(bookViewModel)
+                    BookApp()
                 }
             }
         }
