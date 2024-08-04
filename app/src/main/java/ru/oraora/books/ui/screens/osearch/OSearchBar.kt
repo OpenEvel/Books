@@ -478,26 +478,6 @@ fun HistoryItem(
     }
 }
 
-@Composable
-@Stable
-fun keyboardAsState(): State<Boolean> {
-    val view = LocalView.current
-    var isImeVisible by remember { mutableStateOf(false) }
-
-    DisposableEffect(LocalWindowInfo.current) {
-        val listener = ViewTreeObserver.OnPreDrawListener {
-            isImeVisible = ViewCompat.getRootWindowInsets(view)
-                ?.isVisible(WindowInsetsCompat.Type.ime()) == true
-            true
-        }
-        view.viewTreeObserver.addOnPreDrawListener(listener)
-        onDispose {
-            view.viewTreeObserver.removeOnPreDrawListener(listener)
-        }
-    }
-    return rememberUpdatedState(isImeVisible)
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OSearchBarField(
