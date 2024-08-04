@@ -4,7 +4,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import ru.oraora.books.viewmodel.Routes
 
 fun NavController.navigateWithBackStart(route: String) {
     navigate(route) {

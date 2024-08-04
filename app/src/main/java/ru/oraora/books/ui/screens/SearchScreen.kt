@@ -4,6 +4,7 @@ package ru.oraora.books.ui.screens
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -159,6 +161,35 @@ fun SearchScreen(
                 clearHistory = bookViewModel::clearHistory,
                 scrollState = scrollState,
             )
+//            OSearchBar(
+//                query = uiState.query,
+//                lastQuery = uiState.lastQuery,
+//                onQueryChange = bookViewModel::onQueryChange,
+//                onSearch = {
+//                    coroutineScope.launch { scrollState.scrollToItem(0, 0) }
+//                    bookViewModel.loadBooks()
+//                },
+//                active = uiState.isSearchActive,
+//                onActiveChange = { active, timeStop ->
+//                    coroutineScope.launch {
+//                        delay(timeStop)
+//                        bookViewModel.onSearchActiveChange(active)
+//                        if (!active) {
+//                            focusManager.clearFocus()
+//                            keyboardController?.hide()
+//                        }
+//                    }
+//                },
+//                placeholder = null,
+//                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+//                trailingIcon = { Icon(Icons.Default.Cancel, contentDescription = "Cancel icon") },
+//                searchHistory = bookViewModel.searchHistory,
+//                addHistory = bookViewModel::addHistory,
+//                removeHistory = bookViewModel::removeHistory,
+//                clearHistory = bookViewModel::clearHistory,
+//                animationProgress = OSearchBarDefaults.animationProgress(active = uiState.isSearchActive),
+//            )
+
         }
 
         Box(
@@ -307,7 +338,6 @@ fun SearchBookGrid(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-
         ) {
 
             if (topHeight > 0.dp) {
@@ -326,10 +356,13 @@ fun SearchBookGrid(
                     onRemoveFavorite = onRemoveFavorite,
                     modifier = Modifier
                         .size(cellWidth, cellHeight)
-                        .clickable {
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
                             onBookSelect(book)
                         },
-                    onFinishModifier = Modifier.shadow(2.dp),
+                    onFinishModifier = Modifier.shadow(1.dp),
                 )
             }
 
