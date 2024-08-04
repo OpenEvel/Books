@@ -10,7 +10,9 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +34,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -230,7 +231,7 @@ fun FavoriteBookGrid(
                     )
 
                     val elevation by animateDpAsState(
-                        if (isDragging) 8.dp else 2.dp,
+                        if (isDragging) 8.dp else 1.dp,
                         label = ""
                     )
 
@@ -260,8 +261,10 @@ fun FavoriteBookGrid(
                                                     onTap = { onBookSelect(book) },
                                                     onLongPress = {
                                                         onDelOptionsChange(true)
-                                                        val start = state.gridState.firstVisibleItemIndex
-                                                        val end = state.gridState.layoutInfo.visibleItemsInfo.lastIndex
+                                                        val start =
+                                                            state.gridState.firstVisibleItemIndex
+                                                        val end =
+                                                            state.gridState.layoutInfo.visibleItemsInfo.lastIndex
 //                                                        onRemoveAllFavorite(start, end, 300)
                                                     }
                                                 )
@@ -279,24 +282,27 @@ fun FavoriteBookGrid(
                                 enter = scaleIn(),
                                 exit = scaleOut(),
                             ) {
-                                IconButton(
-                                    onClick = {
-                                        isVisible = false
-                                        onRemoveFavorite(book.id, 300)
-                                    },
+
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = null,
+                                    tint = Color.Black,
                                     modifier = Modifier
                                         .padding(delButtonPadding)
                                         .size(24.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = null,
-                                        tint = Color.Black,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(color = Color.White, shape = CircleShape)
-                                    )
-                                }
+                                        .shadow(1.dp, shape = CircleShape)
+                                        .background(
+                                            color = Color.White,
+                                            shape = CircleShape
+                                        )
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null
+                                        ) {
+                                            isVisible = false
+                                            onRemoveFavorite(book.id, 300)
+                                        }
+                                )
                             }
                         }
                     }
