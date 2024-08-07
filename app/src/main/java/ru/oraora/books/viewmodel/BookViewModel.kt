@@ -20,6 +20,7 @@ import ru.oraora.books.data.repository.BookRepository
 import java.io.IOException
 import java.util.Collections
 import org.burnoutcrew.reorderable.ItemPosition
+import ru.oraora.books.data.models.FavoriteBook
 
 
 class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
@@ -33,8 +34,8 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     private val _searchingBooks = mutableStateListOf<Book>()
     val searchingBooks: List<Book> get() = Collections.unmodifiableList(_searchingBooks)
 
-    private val _favoriteBooks = mutableStateListOf<Book>()
-    val favoriteBooks: List<Book> get() = Collections.unmodifiableList(_favoriteBooks)
+    private val _favoriteBooks = mutableStateListOf<FavoriteBook>()
+    val favoriteBooks: List<FavoriteBook> get() = Collections.unmodifiableList(_favoriteBooks)
 
     fun addHistory(query: String, timeStop: Long = 0) {
         viewModelScope.launch {
@@ -62,19 +63,28 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
     fun addFavorite(book: Book, timeStop: Long = 0) {
         viewModelScope.launch {
             delay(timeStop)
-            _favoriteBooks.add(0, book)
+            _favoriteBooks.add(0, FavoriteBook(book = book))
         }
     }
 
     fun removeFavorite(bookId: String, timeStop: Long = 0) {
         viewModelScope.launch {
-            delay(timeStop)
-            _favoriteBooks.removeIf { it.id == bookId }
+            val index = _favoriteBooks.indexOfFirst { it.book.id == bookId }
+            if (index >= 0 && index <= favoriteBooks.size - 1) {
+                _favoriteBooks[index].isVisibleState.value = false
+                delay(timeStop)
+                _favoriteBooks.removeAt(index)
+            }
         }
     }
 
     fun clearFavorite(start: Int = 0, end: Int = 0, timeStop: Long = 0) {
         viewModelScope.launch {
+
+            for (i in end downTo start) {
+                delay(timeStop)
+                _favoriteBooks[i].isVisibleState.value = false
+            }
             delay(timeStop)
             _favoriteBooks.clear()
         }

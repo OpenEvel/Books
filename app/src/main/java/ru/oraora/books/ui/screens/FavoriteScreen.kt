@@ -1,10 +1,12 @@
 package ru.oraora.books.ui.screens
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -16,6 +18,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -32,19 +35,26 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.pointerInput
@@ -52,6 +62,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import org.burnoutcrew.reorderable.ItemPosition
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -59,6 +70,7 @@ import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.rememberReorderableLazyGridState
 import org.burnoutcrew.reorderable.reorderable
 import ru.oraora.books.data.models.Book
+import ru.oraora.books.data.models.FavoriteBook
 import ru.oraora.books.ui.screens.obook.BookImage
 import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
@@ -88,28 +100,61 @@ fun FavoriteScreen(
         modifier = modifier
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background)
         ) {
             Spacer(
-                modifier = Modifier.height(topBarHeight)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(topBarHeight)
             )
-
-            Text(
-                text = "Favorites",
-                color = LocalTextStyle.current.color.takeOrElse {
-                    MaterialTheme.colorScheme.onSurface
-                },
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.displaySmall,
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .wrapContentSize(Alignment.Center)
-            )
+            ) {
+                Text(
+                    text = "Favorites",
+                    color = LocalTextStyle.current.color.takeOrElse {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.displaySmall,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .wrapContentSize(Alignment.Center)
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    AnimatedVisibility(
+                        visible = uiState.showDelOptions,
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut()
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                                .size(28.dp)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    bookViewModel.delOptionsChange(false)
+                                }
+                        )
+                    }
+                }
+            }
         }
+
 
         FavoriteBookGrid(
             favoriteBooks = bookViewModel.favoriteBooks,
@@ -123,7 +168,7 @@ fun FavoriteScreen(
             },
             onRemoveFavorite = bookViewModel::removeFavorite,
             onMoveFavorite = bookViewModel::moveFavorite,
-            onRemoveAllFavorite = bookViewModel::clearFavorite,
+            clearFavorite = bookViewModel::clearFavorite,
             showDelOptions = uiState.showDelOptions,
             onDelOptionsChange = bookViewModel::delOptionsChange,
             modifier = Modifier.fillMaxSize()
@@ -133,14 +178,14 @@ fun FavoriteScreen(
 
 @Composable
 fun FavoriteBookGrid(
-    favoriteBooks: List<Book>,
+    favoriteBooks: List<FavoriteBook>,
     columnsCount: Int,
     onBookSelect: (Book) -> Unit,
     onRemoveFavorite: (bookId: String, timeStop: Long) -> Unit,
     onMoveFavorite: (from: ItemPosition, to: ItemPosition) -> Unit,
     showDelOptions: Boolean,
     onDelOptionsChange: (Boolean) -> Unit,
-    onRemoveAllFavorite: (start: Int, end: Int, timeStop: Long) -> Unit,
+    clearFavorite: (start: Int, end: Int, timeStop: Long) -> Unit,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
     val state = rememberReorderableLazyGridState(onMove = onMoveFavorite)
@@ -154,15 +199,24 @@ fun FavoriteBookGrid(
         (LocalConfiguration.current.screenWidthDp.dp - 16.dp - 8.dp - 16.dp) / columnsCount
     val cellHeight = 1.5 * cellWidth
 
-    Box(modifier = modifier
-        .fillMaxSize()
-        .pointerInput(Unit) {
-            detectTapGestures(
-                onLongPress = {
-                    onDelOptionsChange(true)
-                }
-            )
+    LaunchedEffect(favoriteBooks.size, showDelOptions) {
+        if (showDelOptions && favoriteBooks.isEmpty()) {
+            onDelOptionsChange(false)
         }
+    }
+
+    Box(contentAlignment = Alignment.BottomCenter,
+        modifier = modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = {
+                        if (favoriteBooks.isNotEmpty()) {
+                            onDelOptionsChange(true)
+                        }
+                    }
+                )
+            }
     ) {
         LazyVerticalGrid(
             state = state.gridState,
@@ -174,7 +228,9 @@ fun FavoriteBookGrid(
                 .padding(horizontal = 16.dp)
                 .reorderable(state)
         ) {
-            itemsIndexed(favoriteBooks, key = { _, book -> book.id }) { index, book ->
+            itemsIndexed(
+                favoriteBooks,
+                key = { _, favBook -> favBook.book.id }) { index, favBook ->
                 val firstLineModifier = if (index < columnsCount) {
                     Modifier.padding(top = 8.dp)
                 } else {
@@ -208,7 +264,7 @@ fun FavoriteBookGrid(
                         )
                 )
 
-                ReorderableItem(state, key = book.id) { isDragging ->
+                ReorderableItem(state, key = favBook.book.id) { isDragging ->
 
                     val cardPadding by animateDpAsState(
                         if (!showDelOptions) {
@@ -235,10 +291,8 @@ fun FavoriteBookGrid(
                         label = ""
                     )
 
-                    var isVisible by remember { mutableStateOf(true) }
-
                     AnimatedVisibility(
-                        visible = isVisible,
+                        visible = favBook.isVisibleState.value,
                         exit = fadeOut() + scaleOut(),
                     ) {
                         Box(
@@ -250,7 +304,7 @@ fun FavoriteBookGrid(
                                 .size(cellWidth, cellHeight)
                         ) {
                             BookImage(
-                                imageBookLink = book.imageLink,
+                                imageBookLink = favBook.book.imageLink,
                                 modifier = Modifier
                                     .padding(cardPadding)
                                     .fillMaxSize()
@@ -258,14 +312,9 @@ fun FavoriteBookGrid(
                                         if (!showDelOptions) {
                                             Modifier.pointerInput(Unit) {
                                                 detectTapGestures(
-                                                    onTap = { onBookSelect(book) },
+                                                    onTap = { onBookSelect(favBook.book) },
                                                     onLongPress = {
                                                         onDelOptionsChange(true)
-                                                        val start =
-                                                            state.gridState.firstVisibleItemIndex
-                                                        val end =
-                                                            state.gridState.layoutInfo.visibleItemsInfo.lastIndex
-//                                                        onRemoveAllFavorite(start, end, 300)
                                                     }
                                                 )
                                             }
@@ -299,13 +348,50 @@ fun FavoriteBookGrid(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = null
                                         ) {
-                                            isVisible = false
-                                            onRemoveFavorite(book.id, 300)
+                                            onRemoveFavorite(favBook.book.id, 300)
                                         }
                                 )
                             }
                         }
                     }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = showDelOptions,
+            enter = fadeIn(),
+            exit = fadeOut() + scaleOut(),
+            modifier = Modifier.padding(bottom = 4.5.dp)
+        ) {
+            Button(
+                onClick = {
+                    val start =
+                        state.gridState.firstVisibleItemIndex
+                    val end =
+                        state.gridState.layoutInfo.visibleItemsInfo.last().index
+                    clearFavorite(start, end, 200)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Red.copy(),
+                    contentColor = Color.White
+                ),
+                shape = CircleShape,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Text(
+                        text = "Удалить все",
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
                 }
             }
         }

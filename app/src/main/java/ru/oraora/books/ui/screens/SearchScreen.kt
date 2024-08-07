@@ -70,6 +70,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
+import ru.oraora.books.data.models.FavoriteBook
 import ru.oraora.books.ui.screens.obook.BookCardWithBookmark
 import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults
 import ru.oraora.books.ui.screens.osearch.TopSearchBar
@@ -161,35 +162,6 @@ fun SearchScreen(
                 clearHistory = bookViewModel::clearHistory,
                 scrollState = scrollState,
             )
-//            OSearchBar(
-//                query = uiState.query,
-//                lastQuery = uiState.lastQuery,
-//                onQueryChange = bookViewModel::onQueryChange,
-//                onSearch = {
-//                    coroutineScope.launch { scrollState.scrollToItem(0, 0) }
-//                    bookViewModel.loadBooks()
-//                },
-//                active = uiState.isSearchActive,
-//                onActiveChange = { active, timeStop ->
-//                    coroutineScope.launch {
-//                        delay(timeStop)
-//                        bookViewModel.onSearchActiveChange(active)
-//                        if (!active) {
-//                            focusManager.clearFocus()
-//                            keyboardController?.hide()
-//                        }
-//                    }
-//                },
-//                placeholder = null,
-//                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-//                trailingIcon = { Icon(Icons.Default.Cancel, contentDescription = "Cancel icon") },
-//                searchHistory = bookViewModel.searchHistory,
-//                addHistory = bookViewModel::addHistory,
-//                removeHistory = bookViewModel::removeHistory,
-//                clearHistory = bookViewModel::clearHistory,
-//                animationProgress = OSearchBarDefaults.animationProgress(active = uiState.isSearchActive),
-//            )
-
         }
 
         Box(
@@ -315,7 +287,7 @@ fun SearchBookGrid(
     books: List<Book>,
     columnsCount: Int,
     onBookSelect: (Book) -> Unit,
-    favoriteBooks: List<Book>,
+    favoriteBooks: List<FavoriteBook>,
     onAddFavorite: (Book) -> Unit = {},
     onRemoveFavorite: (String) -> Unit = {},
     scrollState: LazyGridState = rememberLazyGridState(),
@@ -351,7 +323,7 @@ fun SearchBookGrid(
             items(books, key = { it.id }) { book ->
                 BookCardWithBookmark(
                     book = book,
-                    isBookmarked = favoriteBooks.any { it.id == book.id },
+                    isBookmarked = favoriteBooks.any { it.book.id == book.id },
                     onAddFavorite = onAddFavorite,
                     onRemoveFavorite = onRemoveFavorite,
                     modifier = Modifier
