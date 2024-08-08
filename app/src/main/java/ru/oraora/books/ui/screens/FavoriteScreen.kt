@@ -49,12 +49,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.pointerInput
@@ -218,6 +220,31 @@ fun FavoriteBookGrid(
                 )
             }
     ) {
+        val isGridTop by remember {
+            derivedStateOf {
+                state.gridState.firstVisibleItemIndex == 0 &&
+                        state.gridState.firstVisibleItemScrollOffset == 0
+            }
+        }
+        AnimatedVisibility(
+            visible = !isGridTop,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.TopCenter)
+        ) {
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(Color.Black.copy(alpha = 0.1f), Color.Transparent),
+                            startY = 0f, // Начинаем градиент сверху
+                            endY = Float.POSITIVE_INFINITY // Заканчиваем градиент снизу
+                        )
+                    )
+            )
+        }
         LazyVerticalGrid(
             state = state.gridState,
             columns = GridCells.Fixed(columnsCount),

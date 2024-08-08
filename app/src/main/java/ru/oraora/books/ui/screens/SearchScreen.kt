@@ -2,7 +2,11 @@ package ru.oraora.books.ui.screens
 
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -47,11 +51,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -116,7 +124,7 @@ fun SearchScreen(
     Box(
         modifier = modifier.pullRefresh(pullRefreshState)
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .zIndex(1f)
@@ -162,6 +170,34 @@ fun SearchScreen(
                 clearHistory = bookViewModel::clearHistory,
                 scrollState = scrollState,
             )
+
+            val firstLineHeightPx = with(LocalDensity.current) {OSearchBarDefaults.firstLineHeight.toPx()}
+            val isGridTop by remember {
+                derivedStateOf {
+                    scrollState.firstVisibleItemIndex == 0 &&
+                            scrollState.firstVisibleItemScrollOffset <= firstLineHeightPx  &&
+                            !uiState.isSearchActive
+                }
+            }
+
+            AnimatedVisibility(
+                visible = !isGridTop,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Black.copy(alpha = 0.1f), Color.Transparent),
+                                startY = 0f, // Начинаем градиент сверху
+                                endY = Float.POSITIVE_INFINITY // Заканчиваем градиент снизу
+                            )
+                        )
+                )
+            }
         }
 
         Box(
