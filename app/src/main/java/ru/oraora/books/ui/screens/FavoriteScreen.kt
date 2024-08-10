@@ -1,7 +1,6 @@
 package ru.oraora.books.ui.screens
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -36,14 +35,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -51,12 +47,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.focusModifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.pointerInput
@@ -64,7 +60,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import org.burnoutcrew.reorderable.ItemPosition
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -74,6 +69,7 @@ import org.burnoutcrew.reorderable.reorderable
 import ru.oraora.books.data.models.Book
 import ru.oraora.books.data.models.FavoriteBook
 import ru.oraora.books.ui.screens.obook.BookImage
+import ru.oraora.books.ui.screens.ogrid.ShadowLine
 import ru.oraora.books.viewmodel.BookUiState
 import ru.oraora.books.viewmodel.BookViewModel
 import ru.oraora.books.viewmodel.Routes
@@ -201,8 +197,11 @@ fun FavoriteBookGrid(
         (LocalConfiguration.current.screenWidthDp.dp - 16.dp - 8.dp - 16.dp) / columnsCount
     val cellHeight = 1.5 * cellWidth
 
+    var isVisDelAllBtn by remember { mutableStateOf(true) }
+
     LaunchedEffect(favoriteBooks.size, showDelOptions) {
         if (showDelOptions && favoriteBooks.isEmpty()) {
+            isVisDelAllBtn = false
             onDelOptionsChange(false)
         }
     }
@@ -214,37 +213,14 @@ fun FavoriteBookGrid(
                 detectTapGestures(
                     onLongPress = {
                         if (favoriteBooks.isNotEmpty()) {
+                            isVisDelAllBtn = true
                             onDelOptionsChange(true)
                         }
                     }
                 )
             }
     ) {
-        val isGridTop by remember {
-            derivedStateOf {
-                state.gridState.firstVisibleItemIndex == 0 &&
-                        state.gridState.firstVisibleItemScrollOffset == 0
-            }
-        }
-        AnimatedVisibility(
-            visible = !isGridTop,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier.align(Alignment.TopCenter)
-        ) {
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color.Black.copy(alpha = 0.1f), Color.Transparent),
-                            startY = 0f, // Начинаем градиент сверху
-                            endY = Float.POSITIVE_INFINITY // Заканчиваем градиент снизу
-                        )
-                    )
-            )
-        }
+
         LazyVerticalGrid(
             state = state.gridState,
             columns = GridCells.Fixed(columnsCount),
@@ -341,6 +317,7 @@ fun FavoriteBookGrid(
                                                 detectTapGestures(
                                                     onTap = { onBookSelect(favBook.book) },
                                                     onLongPress = {
+                                                        isVisDelAllBtn = true
                                                         onDelOptionsChange(true)
                                                     }
                                                 )
@@ -385,14 +362,27 @@ fun FavoriteBookGrid(
             }
         }
 
+        val isGridTop by remember {
+            derivedStateOf {
+                state.gridState.firstVisibleItemIndex == 0 &&
+                        state.gridState.firstVisibleItemScrollOffset == 0
+            }
+        }
+
+        ShadowLine(
+            isShow = !isGridTop,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
+
         AnimatedVisibility(
-            visible = showDelOptions,
+            visible = isVisDelAllBtn,
             enter = fadeIn(),
             exit = fadeOut() + scaleOut(),
             modifier = Modifier.padding(bottom = 4.5.dp)
         ) {
             Button(
                 onClick = {
+                    isVisDelAllBtn = false
                     val start =
                         state.gridState.firstVisibleItemIndex
                     val end =

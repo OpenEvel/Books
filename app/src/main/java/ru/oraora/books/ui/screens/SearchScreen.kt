@@ -2,11 +2,7 @@ package ru.oraora.books.ui.screens
 
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -58,8 +54,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -80,6 +74,7 @@ import ru.oraora.books.R
 import ru.oraora.books.data.models.Book
 import ru.oraora.books.data.models.FavoriteBook
 import ru.oraora.books.ui.screens.obook.BookCardWithBookmark
+import ru.oraora.books.ui.screens.ogrid.ShadowLine
 import ru.oraora.books.ui.screens.osearch.OSearchBarDefaults
 import ru.oraora.books.ui.screens.osearch.TopSearchBar
 import ru.oraora.books.viewmodel.BookUiState
@@ -179,25 +174,7 @@ fun SearchScreen(
                             !uiState.isSearchActive
                 }
             }
-
-            AnimatedVisibility(
-                visible = !isGridTop,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(Color.Black.copy(alpha = 0.1f), Color.Transparent),
-                                startY = 0f, // Начинаем градиент сверху
-                                endY = Float.POSITIVE_INFINITY // Заканчиваем градиент снизу
-                            )
-                        )
-                )
-            }
+            ShadowLine(isShow = !isGridTop)
         }
 
         Box(
