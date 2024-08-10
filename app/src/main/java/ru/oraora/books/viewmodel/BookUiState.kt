@@ -31,4 +31,5 @@ data class BookUiState(
     val isShowingBookPage: Boolean = false,
     val searchColumnsCount: Int = 2,
     val showDelOptions: Boolean = false,
+    val showDelAllBtn: Boolean = false,
 )

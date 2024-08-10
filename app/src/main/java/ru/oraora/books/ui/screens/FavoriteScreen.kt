@@ -47,9 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -169,6 +167,7 @@ fun FavoriteScreen(
             clearFavorite = bookViewModel::clearFavorite,
             showDelOptions = uiState.showDelOptions,
             onDelOptionsChange = bookViewModel::delOptionsChange,
+            showDelAllBtn = uiState.showDelAllBtn,
             modifier = Modifier.fillMaxSize()
         )
     }
@@ -183,6 +182,7 @@ fun FavoriteBookGrid(
     onMoveFavorite: (from: ItemPosition, to: ItemPosition) -> Unit,
     showDelOptions: Boolean,
     onDelOptionsChange: (Boolean) -> Unit,
+    showDelAllBtn: Boolean,
     clearFavorite: (start: Int, end: Int, timeStop: Long) -> Unit,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
@@ -197,11 +197,8 @@ fun FavoriteBookGrid(
         (LocalConfiguration.current.screenWidthDp.dp - 16.dp - 8.dp - 16.dp) / columnsCount
     val cellHeight = 1.5 * cellWidth
 
-    var isVisDelAllBtn by remember { mutableStateOf(true) }
-
     LaunchedEffect(favoriteBooks.size, showDelOptions) {
         if (showDelOptions && favoriteBooks.isEmpty()) {
-            isVisDelAllBtn = false
             onDelOptionsChange(false)
         }
     }
@@ -213,7 +210,6 @@ fun FavoriteBookGrid(
                 detectTapGestures(
                     onLongPress = {
                         if (favoriteBooks.isNotEmpty()) {
-                            isVisDelAllBtn = true
                             onDelOptionsChange(true)
                         }
                     }
@@ -317,7 +313,6 @@ fun FavoriteBookGrid(
                                                 detectTapGestures(
                                                     onTap = { onBookSelect(favBook.book) },
                                                     onLongPress = {
-                                                        isVisDelAllBtn = true
                                                         onDelOptionsChange(true)
                                                     }
                                                 )
@@ -375,19 +370,18 @@ fun FavoriteBookGrid(
         )
 
         AnimatedVisibility(
-            visible = isVisDelAllBtn,
+            visible = showDelAllBtn,
             enter = fadeIn(),
             exit = fadeOut() + scaleOut(),
             modifier = Modifier.padding(bottom = 4.5.dp)
         ) {
             Button(
                 onClick = {
-                    isVisDelAllBtn = false
                     val start =
                         state.gridState.firstVisibleItemIndex
                     val end =
                         state.gridState.layoutInfo.visibleItemsInfo.last().index
-                    clearFavorite(start, end, 200)
+                    clearFavorite(start, end, 300)
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Red.copy(),

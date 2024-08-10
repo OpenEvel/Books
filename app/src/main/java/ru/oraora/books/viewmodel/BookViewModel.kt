@@ -80,10 +80,23 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
 
     fun clearFavorite(start: Int = 0, end: Int = 0, timeStop: Long = 0) {
         viewModelScope.launch {
+            _uiState.update {
+                it.copy(showDelAllBtn = false)
+            }
+            val isStartIn = start in _favoriteBooks.indices
+            val isEndIn = end in _favoriteBooks.indices
+            if (isStartIn && isEndIn) {
+                val cnt = end - start + 1
+                val realTimeStop: Long = if (cnt > 1) {
+                    (timeStop / 1.5).toLong()
+                } else {
+                    timeStop
+                }
 
-            for (i in end downTo start) {
-                delay(timeStop)
-                _favoriteBooks[i].isVisibleState.value = false
+                for (i in end downTo start) {
+                    delay(realTimeStop)
+                    _favoriteBooks[i].isVisibleState.value = false
+                }
             }
             delay(timeStop)
             _favoriteBooks.clear()
@@ -221,7 +234,8 @@ class BookViewModel(private val bookRepository: BookRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
-                    showDelOptions = isVisible
+                    showDelOptions = isVisible,
+                    showDelAllBtn = isVisible
                 )
             }
         }
