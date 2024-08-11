@@ -3,40 +3,32 @@ package ru.oraora.books.ui.navigation
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmarks
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Bookmarks
+import androidx.compose.material.BottomNavigation
+import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import ru.oraora.books.R
 import ru.oraora.books.viewmodel.Routes
-
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 
 
 @Composable
 fun BottomNavigationBar(
     navController: NavController,
     activateSearch: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     val currentDestination: NavDestination?
@@ -55,76 +47,44 @@ fun BottomNavigationBar(
         visible = !isRealBookInfo,
         enter = fadeIn(),
         exit = fadeOut(),
+        modifier = modifier
     ) {
 
         val colorScheme = MaterialTheme.colorScheme
+        val selectedColor = if (isSystemInDarkTheme()) {
+            Color.White
+        } else {
+            Color.Black
+        }
+        val unselectedColor = selectedColor.copy(alpha = 0.5f)
 
-        Box {
-            NavigationBar(
-                tonalElevation = 0.dp,
-            ) {
-
-                NavigationBarItem(
-                    selected = currentDestination.isCurrent(Routes.ADVICE),
-                    onClick = { navController.navigateWithBackStart(Routes.ADVICE) },
-                    icon = {
-                        Icon(
-                            painter = painterResource(
-                                id = R.drawable.asterisk
-                            ),
-                            contentDescription = null
-                        )
-                    },
-                )
-
-                // Search Screen
-                NavigationBarItem(
-                    selected = currentDestination.isCurrent(Routes.SEARCH),
+        BottomNavigation(
+            backgroundColor = colorScheme.background
+        ) {
+            BOTTOM_TABS.forEach { item ->
+                val isSelected = currentDestination.isCurrent(item.route)
+                BottomNavigationItem(
+                    selected = isSelected,
                     onClick = {
-                        if (!isRealBookInfo && currentDestination.isCurrent(Routes.SEARCH)) {
+                        if (!isSelected) {
+                            navController.navigateWithBackStart(item.route)
+                        } else if (item.selectedId == BottomNavigationData.SEARCH.selectedId) {
                             activateSearch()
-                        } else {
-                            navController.navigateWithBackStart(Routes.SEARCH)
                         }
                     },
                     icon = {
                         Icon(
-                            Icons.Default.Search,
-                            contentDescription = null
+                            painter = painterResource(
+                                id = if (isSelected) item.selectedId else item.unselectedId
+                            ),
+                            contentDescription = null,
+                            tint = if (isSelected) selectedColor else unselectedColor
                         )
-                    }
-                )
-
-                // Favorite Screen
-                NavigationBarItem(
-                    selected = currentDestination.isCurrent(Routes.FAVORITE),
-                    onClick = { navController.navigateWithBackStart(Routes.FAVORITE) },
-                    icon = {
-                        val bookmarksIcon: ImageVector =
-                            if (currentDestination.isCurrent(Routes.FAVORITE)) Icons.Default.Bookmarks else Icons.Outlined.Bookmarks
-                        Icon(bookmarksIcon, contentDescription = null)
-                    }
+                    },
+                    selectedContentColor = MaterialTheme.colorScheme.onBackground,
                 )
             }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .align(Alignment.TopCenter)
-                    .drawBehind {
-                        val brush = Brush.verticalGradient(
-                            colors = listOf(
-                                colorScheme.onBackground.copy(alpha = 0.05f),
-                                colorScheme.background
-                            )
-                        )
-                        drawRect(
-                            brush = brush,
-                            size = size
-                        )
-                    }
-            )
         }
+
     }
 }

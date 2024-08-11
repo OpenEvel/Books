@@ -4,20 +4,17 @@ import androidx.compose.ui.text.input.TextFieldValue
 import ru.oraora.books.data.models.Book
 
 sealed interface SearchState {
-
-    object FirstEnter : SearchState
-    object Loading : SearchState
-//    object Refreshing : SearchState
-    object Success : SearchState
-//    data class Success(val books: List<Book>) : SearchState
-    object Error : SearchState
+    data object FirstEnter : SearchState
+    data object Loading : SearchState
+    data object Success : SearchState
+    data object Error : SearchState
 }
 
 object Routes {
-    const val SEARCH = "route_search"
-    const val ADVICE = "route_advice"
-    const val FAVORITE = "route_favorite"
-    const val BOOK_INFO = "route_book_info"
+    const val SEARCH = "search"
+    const val ADVICE = "advice"
+    const val FAVORITE = "favorite"
+    const val BOOK_INFO = "book_info"
 }
 
 

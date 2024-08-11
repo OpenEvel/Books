@@ -30,7 +30,6 @@ fun NavGraph(
     startDestination: String,
     bookViewModel: BookViewModel,
     uiState: BookUiState,
-    contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
 
@@ -77,48 +76,13 @@ fun NavGraph(
         startDestination = startDestination,
         modifier = modifier,
     ) {
-        composable(
-            route = Routes.ADVICE,
-            enterTransition = { enterByBottomNav },
-            exitTransition = { exitByBottomNav }
-        ) {
-            AdviceScreen(
-                navController = navController,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding.copy(top = 0.dp))
-            )
-        }
 
-        composable(
-            route = Routes.SEARCH,
-            enterTransition = { if (initialState.destination.isCurrent(Routes.BOOK_INFO)) enterRight else enterByBottomNav },
-            exitTransition = { if (targetState.destination.isCurrent(Routes.BOOK_INFO)) exitLeft else exitByBottomNav },
-        ) {
-            SearchScreen(
-                bookViewModel = bookViewModel,
-                uiState = uiState,
-                navController = navController,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding.copy(top = 0.dp))
-            )
-        }
+        bottomNavGraph(
+            navController = navController,
+            bookViewModel = bookViewModel,
+            uiState = uiState,
+        )
 
-        composable(
-            route = Routes.FAVORITE,
-            enterTransition = { if (initialState.destination.isCurrent(Routes.BOOK_INFO)) enterRight else enterByBottomNav },
-            exitTransition = { if (targetState.destination.isCurrent(Routes.BOOK_INFO)) exitLeft else exitByBottomNav },
-        ) {
-            FavoriteScreen(
-                bookViewModel = bookViewModel,
-                uiState = uiState,
-                navController = navController,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding.copy(top = 0.dp))
-            )
-        }
         composable(
             route = Routes.BOOK_INFO,
             enterTransition = { enterLeft },
@@ -126,9 +90,6 @@ fun NavGraph(
         ) {
             BookInfoScreen(
                 book = uiState.selectedBook,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding.copy(top = 0.dp))
             )
         }
     }
