@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -130,22 +131,18 @@ fun FavoriteScreen(
                     AnimatedVisibility(
                         visible = uiState.showDelOptions,
                         enter = fadeIn() + scaleIn(),
-                        exit = fadeOut() + scaleOut()
+                        exit = fadeOut(),
+                        modifier = Modifier
+                            .padding(start = 16.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .padding(start = 16.dp)
-                                .size(28.dp)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    bookViewModel.delOptionsChange(false)
-                                }
-                        )
+                        IconButton(onClick = { bookViewModel.delOptionsChange(false) }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onBackground,
+                            )
+                        }
+
                     }
                 }
             }
