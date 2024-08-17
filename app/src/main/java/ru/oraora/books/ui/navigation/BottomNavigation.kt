@@ -3,24 +3,20 @@ package ru.oraora.books.ui.navigation
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.BottomNavigation
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import ru.oraora.books.R
 import ru.oraora.books.viewmodel.Routes
-import androidx.compose.ui.graphics.Color
 
 
 @Composable
@@ -50,16 +46,11 @@ fun BottomNavigationBar(
         modifier = modifier
     ) {
 
-        val colorScheme = MaterialTheme.colorScheme
-        val selectedColor = if (isSystemInDarkTheme()) {
-            Color.White
-        } else {
-            Color.Black
-        }
+        val selectedColor = MaterialTheme.colorScheme.onBackground
         val unselectedColor = selectedColor.copy(alpha = 0.5f)
 
         BottomNavigation(
-            backgroundColor = colorScheme.background
+            backgroundColor = MaterialTheme.colorScheme.background
         ) {
             BOTTOM_TABS.forEach { item ->
                 val isSelected = currentDestination.isCurrent(item.route)
