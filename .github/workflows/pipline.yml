@@ -1,0 +1,62 @@
+name: Build and Release APK
+env:
+  # The name of the main module repository
+  APP_NAME: Books
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Настройка переменных
+      - name: Set up environment variables
+        run: |
+          echo "apk_path=${{ github.workspace }}/${{ env.APP_NAME }}_${{ github.ref_name }}_$(date +'%Y-%m-%d').apk" >> $GITHUB_ENV
+          echo "aab_path=${{ github.workspace }}/${{ env.APP_NAME }}_${{ github.ref_name }}_$(date +'%Y-%m-%d').aab" >> $GITHUB_ENV
+      # Переходим на нужную ветку
+      - uses: actions/checkout@v4
+
+      # Настраиваем java окружение
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '22'
+          cache: 'gradle'
+
+      # Даём права на выполнение gradle
+      - name: Change wrapper permissions
+        run: chmod +x ./gradlew
+
+      #      - name: Run tests
+      #        run: |
+      #          ./gradlew test
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/release-keystore.jks
+      # Генерируем APK
+      - name: Build signed release APK
+        run: |
+          ./gradlew assembleRelease -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/release-keystore.jks" -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+          cp app/build/outputs/apk/release/app-release.apk ${{ env.apk_path }}
+      # Генерируем AAB
+      - name: Build signed release AAB
+        run: |
+          ./gradlew bundleRelease -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/release-keystore.jks" -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+          cp app/build/outputs/bundle/release/app-release.aab ${{ env.aab_path }}
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          files: |
+            ${{ env.apk_path }}
+            ${{ env.aab_path }}
