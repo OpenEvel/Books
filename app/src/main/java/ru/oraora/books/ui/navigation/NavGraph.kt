@@ -6,11 +6,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -30,7 +33,7 @@ fun NavGraph(
     startDestination: String,
     bookViewModel: BookViewModel,
     uiState: BookUiState,
-    modifier: Modifier = Modifier
+    modifier: Modifier
 ) {
 
     val bottomNavDuration = 250
@@ -70,6 +73,8 @@ fun NavGraph(
             targetOffsetX = { it }
         ) + fadeOut(animationSpec = tween(bookInfoDuration))
     }
+
+
 
     NavHost(
         navController = navController,

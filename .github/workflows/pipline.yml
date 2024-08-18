@@ -61,6 +61,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
           tag_name: ${{ github.ref_name }}
+          body: Учёт нижних отступов системных кнопок навигации
           files: |
             ${{ env.apk_path }}
 #            ${{ env.aab_path }}

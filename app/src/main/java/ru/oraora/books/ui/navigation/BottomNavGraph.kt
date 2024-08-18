@@ -6,10 +6,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -28,7 +31,7 @@ fun NavGraphBuilder.bottomNavGraph(
     uiState: BookUiState,
     enterByBottomNav: EnterTransition = fadeIn(animationSpec = tween(250)),
     exitByBottomNav: ExitTransition = fadeOut(animationSpec = tween(250)),
-    bottomNavModifier: Modifier = Modifier.padding(bottom = 56.dp)
+    bottomNavModifier: Modifier = Modifier.padding(bottom = 56.dp),
 ) {
     composable(
         route = BottomNavigationData.ADVICE.route,
