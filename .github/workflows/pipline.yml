@@ -14,6 +14,9 @@ on:
 jobs:
   build_release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
 
     steps:
       # Настройка переменных
@@ -59,9 +62,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.PAT_TOKEN }}
           tag_name: ${{ github.ref_name }}
-          body: Учёт нижних отступов системных кнопок навигации
           files: |
             ${{ env.apk_path }}
 #            ${{ env.aab_path }}
