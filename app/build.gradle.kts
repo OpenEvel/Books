@@ -62,9 +62,8 @@ dependencies {
     // Retrofit
     implementation(libs.retrofit)
     implementation(libs.okhttp)
-    // Json Serialization
-//    implementation(libs.kotlinx.serialization.json)
-//    implementation(libs.retrofit2.kotlinx.serialization.converter)
+    implementation(libs.ogson)
+
     // Coil
     implementation(libs.coil.compose)
     // ViewModel

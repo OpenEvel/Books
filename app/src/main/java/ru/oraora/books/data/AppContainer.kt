@@ -2,8 +2,8 @@ package ru.oraora.books.data
 
 import com.google.gson.GsonBuilder
 import retrofit2.Retrofit
-import retrofit2.converter.ogson.OGsonConverterFactory
-import retrofit2.converter.ogson.OGsonUniversalAdapter
+import ru.moprules.ogson.OGsonConverterFactory
+import ru.moprules.ogson.OGsonUniversalAdapter
 import ru.oraora.books.data.repository.BookRepository
 import ru.oraora.books.data.repository.NetworkBookRepository
 import ru.oraora.books.data.network.BookApiService

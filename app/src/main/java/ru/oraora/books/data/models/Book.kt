@@ -1,8 +1,8 @@
 package ru.oraora.books.data.models
 
 import com.google.gson.annotations.SerializedName
-import retrofit2.converter.ogson.extract.Extract
-import retrofit2.converter.ogson.https.Https
+import ru.moprules.ogson.extract.Extract
+import ru.moprules.ogson.https.Https
 
 
 data class Book(
