@@ -1,7 +1,38 @@
+import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.compose.compiler)
+}
+
+fun getLastVersion(defaultVersion: String = "1.0.0-SNAPSHOT"): String {
+    val stdout = ByteArrayOutputStream()
+    return try {
+        exec {
+            commandLine = "git describe --tags --abbrev=0".split(" ")
+            standardOutput = stdout
+        }
+        val tag = stdout.toString().trim()
+        if (tag.isEmpty()) {
+            defaultVersion
+        } else {
+            // Удалить первую букву 'v', если она есть
+            tag.removePrefix("v")
+        }
+    } catch (e: Exception) {
+        defaultVersion
+    }
+}
+
+tasks.register("lastVer") {
+    doLast {
+        val ver = getLastVersion()
+        println("project verson: $ver")
+        // Логика использования тега
+    }
 }
 
 android {
@@ -13,7 +44,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = getLastVersion()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
